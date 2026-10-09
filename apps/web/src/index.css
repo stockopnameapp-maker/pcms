@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { -webkit-font-smoothing: antialiased; }
+  body { @apply bg-mist text-ink font-sans text-[14px] leading-[1.5]; font-feature-settings: 'tnum' 1; }
+  h1, h2, h3 { @apply text-ink; letter-spacing: -0.01em; }
+  :focus-visible { outline: 2px solid #B38B2E; outline-offset: 2px; }
+  input, select, textarea { font: inherit; }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+}
+
+@layer components {
+  .panel { @apply bg-white border border-line rounded-panel; }
+  .panel-head { @apply flex items-center justify-between gap-3 px-4 py-3 border-b border-line; }
+  .panel-title { @apply font-semibold text-[14px] text-ink; }
+  .field-label { @apply block text-[12.5px] font-medium text-bark-700 mb-1; }
+  .input { @apply w-full h-9 rounded-md border border-line bg-white px-3 text-[14px] text-ink placeholder:text-bark-400
+           focus:border-canopy-600 focus:outline-none focus:ring-2 focus:ring-canopy-100 disabled:bg-mist disabled:text-bark; }
+  textarea.input { @apply h-auto py-2; }
+  .btn { @apply inline-flex items-center justify-center gap-1.5 h-9 px-3.5 rounded-md text-[13.5px] font-medium transition-colors
+         disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap; }
+  .btn-primary { @apply btn bg-canopy-600 text-white hover:bg-canopy-700; }
+  .btn-secondary { @apply btn bg-white text-ink border border-line hover:border-canopy-500 hover:text-canopy-700; }
+  .btn-ghost { @apply btn text-bark-700 hover:bg-canopy-50 hover:text-canopy-700; }
+  .btn-danger { @apply btn bg-white text-sev-critical border border-red-200 hover:bg-red-50; }
+  .btn-sm { @apply h-8 px-2.5 text-[13px]; }
+  .tbl { @apply w-full text-[13.5px]; }
+  .tbl th { @apply text-left font-cond font-medium text-[12.5px] text-bark px-3 py-2 border-b border-line bg-[#FAFBFA] whitespace-nowrap; }
+  .tbl td { @apply px-3 py-2.5 border-b border-line/70 align-top; }
+  .tbl tbody tr { @apply hover:bg-canopy-50/60; }
+  .num { @apply font-cond tabular-nums; }
+  .chip { @apply inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] font-medium leading-4; }
+  .scrollbar-thin { scrollbar-width: thin; }
+}

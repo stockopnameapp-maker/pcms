@@ -1,0 +1,20 @@
+{
+  "name": "pcms",
+  "private": true,
+  "description": "Plantation Clinic Management System — monorepo",
+  "workspaces": ["packages/*", "apps/*"],
+  "scripts": {
+    "db:reset": "npm run reset -w @pcms/db",
+    "db:migrate": "npm run migrate -w @pcms/db",
+    "db:seed": "npm run seed -w @pcms/db",
+    "db:test": "npm run test -w @pcms/db",
+    "dev:api": "npm run dev -w @pcms/api",
+    "dev:web": "npm run dev -w @pcms/web",
+    "build": "npm run build -w @pcms/web",
+    "start": "npm run start -w @pcms/api",
+    "typecheck": "npm run typecheck -w @pcms/api && npm run typecheck -w @pcms/web",
+    "test:api": "npm run test -w @pcms/api",
+    "test": "npm run db:test && npm run test:api"
+  },
+  "engines": { "node": ">=20" }
+}

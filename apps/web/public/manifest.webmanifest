@@ -1,0 +1,2 @@
+{ "name": "PCMS — Plantation Clinic Management System", "short_name": "PCMS", "start_url": "/", "display": "standalone",
+  "background_color": "#F3F5F4", "theme_color": "#0E3B2E", "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }] }

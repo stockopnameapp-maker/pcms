@@ -1,0 +1,20 @@
+{
+  "name": "@pcms/db",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "PCMS PostgreSQL schema, row-level security, migrations, seed and security tests",
+  "scripts": {
+    "reset": "node scripts/reset.mjs",
+    "migrate": "node scripts/migrate.mjs",
+    "seed": "node seed/seed.mjs",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs"
+  },
+  "dependencies": {
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.0.0",
+    "@node-rs/argon2": "^2.2.2"
+  }
+}
