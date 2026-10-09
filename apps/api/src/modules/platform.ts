@@ -1,4 +1,5 @@
 // Administration, audit viewer (Phase 11), attachments, printable documents, self-service portal, public verification.
+import { BRAND_MARK_PNG, BRAND_MARK_RATIO } from '../core/brand.js';
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { createHash, randomUUID } from 'node:crypto';
@@ -31,6 +32,11 @@ function pdfDoc(): { doc: PDFKit.PDFDocument; done: Promise<Buffer> } {
 
 function letterhead(doc: PDFKit.PDFDocument, clinic: any, title: string, number: string) {
   doc.rect(0, 0, doc.page.width, 92).fill('#0F3D2E');
+  { // Palmora Health mark on a white tile, top right
+    const tx = doc.page.width - 50 - 66, ty = 13;
+    doc.roundedRect(tx, ty, 66, 66, 9).fill('#FFFFFF');
+    const w = 52; doc.image(BRAND_MARK_PNG, tx + 7, ty + (66 - w * BRAND_MARK_RATIO) / 2, { width: w });
+  }
   doc.fillColor('#FFFFFF').font('Helvetica-Bold').fontSize(16).text(clinic.clinic_name ?? 'Klinik', 50, 24);
   doc.font('Helvetica').fontSize(9).text([clinic.address, clinic.city].filter(Boolean).join(', ') || clinic.tenant_name || '', 50, 46)
     .text(clinic.tenant_name ? `${clinic.tenant_name}${clinic.phone ? ' · Telp ' + clinic.phone : ''}` : '', 50, 60);
@@ -262,7 +268,7 @@ export default async function platformRoutes(app: FastifyInstance) {
       const qr = await QRCode.toBuffer(data.verification_code ? `PCMS-VERIFY:${data.verification_code}` : `PCMS:${kind}:${data.id}`, { margin: 0, width: 110 });
       doc.image(qr, 60, y, { width: 90 });
       doc.fontSize(8).fillColor('#5B6B63').text(verify, 50, y + 96, { width: 160 });
-      doc.fontSize(7).text(`Dicetak melalui PCMS · ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`, 50, doc.page.height - 40, { align: 'center', width: doc.page.width - 100 });
+      doc.fontSize(7).text(`Dicetak melalui Palmora Health · ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })}`, 50, doc.page.height - 40, { align: 'center', width: doc.page.width - 100 });
       doc.end();
       return sendFile(reply, await done, 'application/pdf', `${kind}-${data.certificate_no ?? data.referral_no}.pdf`);
     });

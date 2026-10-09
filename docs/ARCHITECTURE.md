@@ -1,4 +1,4 @@
-# PCMS — Plantation Clinic Management System
+# Palmora Health (PCMS — Plantation Clinic Management System)
 ## Blueprint Arsitektur & Implementasi (Phase 1–12)
 
 > Dokumen ini berisi analisis kebutuhan, arsitektur, skema database, ERD, RBAC, strategi tenant isolation, struktur API, struktur proyek, navigasi UI, roadmap, serta status implementasi. Ke-12 phase sudah diimplementasikan dan diuji otomatis (§10–§11). Bagian yang masih berupa rancangan atau batasan yang diketahui ditandai eksplisit (§6.2 dan §11.5).
@@ -410,7 +410,7 @@ Enterprise–medis–perkebunan: **Deep green** `#0F3D2E` (sidebar, header), pri
 ### 9.2 Struktur layar
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ [Logo PCMS]  [Scope: SNG ▸ PT SNL ▸ Kebun Sei Rokan ▾]  [🔍 Cari...]  🔔 👤 │
+│ [Logo Palmora]  [Scope: SNG ▸ PT SNL ▸ Kebun Sei Rokan ▾]  [🔍 Cari...]  🔔 👤 │
 ├──────────────┬───────────────────────────────────────────────────────────┤
 │ Dashboard    │  Breadcrumb · Filter: Periode · Unit                      │
 │ Pelayanan    │  ┌KPI┐ ┌KPI┐ ┌KPI┐ ┌KPI┐ ┌KPI┐                            │

@@ -1,3 +1,4 @@
+import { BRAND_MARK_PNG, BRAND_MARK_RATIO } from '../core/brand.js';
 import ExcelJS from 'exceljs';
 import PDFDocument from 'pdfkit';
 import type { ColumnDef } from './resources.def.js';
@@ -22,7 +23,7 @@ export async function exportRows(format: string, title: string, columns: ColumnD
   if (format === 'pdf') return { buffer: await pdfTable(title, columns, rows, meta), mime: 'application/pdf' };
 
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'PCMS'; wb.created = new Date();
+  wb.creator = 'Palmora Health'; wb.created = new Date();
   const ws = wb.addWorksheet(title.slice(0, 31));
   ws.addRow([title]).font = { bold: true, size: 14, color: { argb: 'FF0F3D2E' } };
   for (const [k, v] of Object.entries(meta)) ws.addRow([k, v]).font = { color: { argb: 'FF5B6B63' } };
@@ -60,7 +61,9 @@ function pdfTable(title: string, columns: ColumnDef[], rows: any[], meta: Record
     doc.on('end', () => resolve(Buffer.concat(chunks)));
     const width = doc.page.width - 72;
     doc.rect(0, 0, doc.page.width, 64).fill('#0F3D2E');
-    doc.fillColor('#FFFFFF').fontSize(15).font('Helvetica-Bold').text('PCMS', 36, 18).fontSize(11).font('Helvetica').text(title, 36, 38);
+    { const tx = doc.page.width - 36 - 48, ty = 8; doc.roundedRect(tx, ty, 48, 48, 7).fill('#FFFFFF');
+      const w = 38; doc.image(BRAND_MARK_PNG, tx + 5, ty + (48 - w * BRAND_MARK_RATIO) / 2, { width: w }); }
+    doc.fillColor('#FFFFFF').fontSize(15).font('Helvetica-Bold').text('Palmora Health', 36, 18).fontSize(11).font('Helvetica').text(title, 36, 38);
     doc.fillColor('#5B6B63').fontSize(8).text(`Dicetak ${new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })} · ${rows.length} baris`, 36, 70);
     let y = 84;
     for (const [k, v] of Object.entries(meta)) { doc.text(`${k}: ${v}`, 36, y); y += 11; }

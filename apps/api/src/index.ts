@@ -5,7 +5,7 @@ import { startScheduler, stopScheduler } from './jobs/scheduler.js';
 
 const app = await buildServer();
 await app.listen({ port: config.port, host: config.host });
-app.log.warn(`PCMS API listening on :${config.port} (${config.env})`);
+app.log.warn(`Palmora Health API listening on :${config.port} (${config.env})`);
 startScheduler(app.log);
 
 for (const sig of ['SIGINT', 'SIGTERM'] as const) {

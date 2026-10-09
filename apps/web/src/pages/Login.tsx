@@ -38,7 +38,7 @@ export default function Login() {
           })}
           <path d="M100 160 L100 200" strokeWidth="2" />
         </svg>
-        <div className="flex items-center gap-3"><img src="/favicon.svg" alt="" className="w-10 h-10" /><span className="font-semibold text-[18px]">PCMS</span></div>
+        <div className="flex items-center gap-3"><span className="w-11 h-11 rounded-xl bg-white grid place-items-center p-1.5"><img src="/brand/mark.png" alt="" className="w-full h-auto" /></span><span className="leading-tight"><span className="block font-semibold text-[18px] text-white">Palmora Health</span><span className="block text-[12.5px] text-canopy-300">People Health Our Priority</span></span></div>
         <div className="max-w-lg relative">
           <h1 className="text-white text-[34px] leading-[1.15] font-semibold">Satu catatan kesehatan untuk seluruh kebun, pabrik, dan klinik.</h1>
           <p className="text-canopy-300 mt-4 text-[15px] leading-relaxed">Pelayanan klinik, kesehatan kerja, K3, farmasi, dan biaya medis — dari divisi hingga holding, dengan akses yang dibatasi sesuai tugas.</p>
@@ -52,7 +52,7 @@ export default function Login() {
       </section>
       <section className="flex items-center justify-center p-6">
         <div className="w-full max-w-sm">
-          <div className="lg:hidden flex items-center gap-2 mb-8"><img src="/favicon.svg" alt="" className="w-9 h-9" /><span className="font-semibold text-[18px]">PCMS</span></div>
+          <img src="/brand/logo.png" alt="Palmora Health — People Health Our Priority" className="h-32 w-auto mx-auto mb-8" />
           <h2 className="text-[22px] font-semibold">{mfa ? 'Verifikasi dua langkah' : 'Masuk'}</h2>
           <p className="text-bark mt-1">{mfa ? 'Masukkan 6 digit kode dari aplikasi autentikator Anda.' : 'Gunakan akun yang diberikan administrator klinik atau HR.'}</p>
           <form onSubmit={submit} className="mt-6 space-y-4" noValidate>

@@ -104,8 +104,8 @@ function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <nav className="flex flex-col h-full" aria-label="Navigasi utama">
       <Link to="/" className="flex items-center gap-2.5 px-4 h-14 shrink-0 border-b border-white/10" onClick={onNavigate}>
-        <img src="/favicon.svg" className="w-8 h-8" alt="" />
-        <span className="leading-tight"><span className="block font-semibold text-white text-[15px] tracking-tight">PCMS</span>
+        <span className="w-9 h-9 shrink-0 rounded-lg bg-white grid place-items-center p-1"><img src="/brand/mark.png" className="w-full h-auto" alt="" /></span>
+        <span className="leading-tight"><span className="block font-semibold text-white text-[15px] tracking-tight">Palmora Health</span>
           <span className="block text-[11.5px] text-canopy-300/80">{me?.user.tenant_name}</span></span>
       </Link>
       <div className="flex-1 overflow-y-auto scrollbar-thin py-3 px-2 space-y-1">

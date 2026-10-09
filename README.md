@@ -1,6 +1,8 @@
-# PCMS — Plantation Clinic Management System
+# Palmora Health
 
-Enterprise multi-tenant clinic & occupational-health platform for palm-oil plantation groups
+*People Health Our Priority* — the clinic & occupational-health platform formerly developed as PCMS (Plantation Clinic Management System).
+
+An enterprise multi-tenant clinic & occupational-health platform for palm-oil plantation groups
 (Group → PT → Region → Estate/Mill → Division → Clinic).
 
 **Status:** all 12 phases implemented and tested — 43 database security tests + 46 API integration tests,
@@ -19,7 +21,7 @@ limitations (in Bahasa Indonesia): [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md
 
 Open this repository in **GitHub Codespaces**: green **Code** button → **Codespaces** → **Create codespace on main**.
 The first start takes about 3–5 minutes (install, database, demo data). A terminal then shows
-**"PCMS siap. Buka: https://…app.github.dev"** — click that link (or open the **Ports** tab → globe icon next to port **8080**).
+**"Palmora Health siap. Buka: https://…app.github.dev"** — click that link (or open the **Ports** tab → globe icon next to port **8080**).
 If nothing appears, open a terminal (Ctrl+`) and run `bash .devcontainer/start.sh`.
 Log in as `sng.superadmin` / `Demo@12345`. Stop the codespace when you're done (free accounts include monthly hours).
 
@@ -42,6 +44,9 @@ npm run db:reset      # create roles + database, run 18 migrations, load demo da
 npm run build         # build the web app into apps/web/dist
 npm start             # API + web on http://localhost:8080
 ```
+
+The Mac app (`Palmora-Health-<version>.dmg`) is built from `packaging/macos/`.
+Internal identifiers keep the original `pcms` name (npm workspaces `@pcms/*`, database `pcms`, roles `pcms_owner`/`pcms_app`, `PCMS_*` env vars, QR code prefixes) so existing installs and data keep working.
 
 Development with hot reload: `npm run dev:api` and `npm run dev:web` (Vite on :5173, proxies `/api` to :8080).
 

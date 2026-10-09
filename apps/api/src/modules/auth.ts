@@ -127,7 +127,7 @@ export default async function authRoutes(app: FastifyInstance) {
       if (enabled) throw badRequest('MFA sudah aktif');
       const secret = generateSecret();
       await tx.q('SELECT app.set_own_mfa($1, false)', [encryptField(secret)]);
-      const uri = generateURI({ issuer: 'PCMS', label: username!, secret } as any);
+      const uri = generateURI({ issuer: 'Palmora Health', label: username!, secret } as any);
       return { secret, otpauthUrl: uri, qrDataUrl: await QRCode.toDataURL(uri, { margin: 1, width: 220 }) };
     }));
 

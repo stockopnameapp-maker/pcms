@@ -1,5 +1,5 @@
 {
-  "name": "PCMS — Plantation Clinic Management System",
+  "name": "Palmora Health",
   "dockerComposeFile": "docker-compose.yml",
   "service": "app",
   "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
@@ -8,7 +8,7 @@
   ],
   "portsAttributes": {
     "8080": {
-      "label": "PCMS",
+      "label": "Palmora Health",
       "onAutoForward": "openBrowser",
       "protocol": "http"
     },

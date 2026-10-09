@@ -43,4 +43,4 @@ npm run db:reset
 echo "▶ Building web app"
 npm run build
 touch /tmp/pcms-setup.ok
-echo "✔ PCMS ready — it starts automatically on port $PORT"
+echo "✔ Palmora Health ready — it starts automatically on port $PORT"

@@ -1,14 +1,14 @@
 #!/bin/bash
-# Assembles PCMS.app (universal: Apple Silicon + Intel) from the repo. Runs on Linux.
+# Assembles Palmora Health.app (universal: Apple Silicon + Intel) from the repo. Runs on Linux.
 set -euo pipefail
 REPO=/home/claude/pcms
 B=/tmp/claude-0/dmg/build
 DL=/tmp/claude-0/dmg/dl
-VERSION=1.0.2
+VERSION=1.1.0
 NODEV=v22.23.3
 PGV=16.14.0-beta.17
 OUT=$B/out
-APP=$OUT/PCMS.app
+APP="$OUT/Palmora Health.app"
 rm -rf "$OUT"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources/app" "$DL"
 RES=$APP/Contents/Resources
 
@@ -47,7 +47,7 @@ cp package.json "$RES/app/package.json"
 # ---- 4. runtimes (Node.js, PostgreSQL) are downloaded by the launcher on first launch, checksum-verified
 
 # ---- 5. bundle metadata
-cp "$B/PCMS.sh" "$APP/Contents/MacOS/PCMS"; chmod 755 "$APP/Contents/MacOS/PCMS"
+cp "$B/Palmora-Health.sh" "$APP/Contents/MacOS/PalmoraHealth"; chmod 755 "$APP/Contents/MacOS/PalmoraHealth"
 cp "$B/AppIcon.icns" "$RES/AppIcon.icns"
 echo "$VERSION" > "$RES/VERSION"
 cat > "$APP/Contents/Info.plist" <<PLIST
@@ -55,13 +55,13 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-  <key>CFBundleName</key><string>PCMS</string>
-  <key>CFBundleDisplayName</key><string>PCMS</string>
-  <key>CFBundleIdentifier</key><string>id.pcms.clinic</string>
+  <key>CFBundleName</key><string>Palmora Health</string>
+  <key>CFBundleDisplayName</key><string>Palmora Health</string>
+  <key>CFBundleIdentifier</key><string>id.palmora.health</string>
   <key>CFBundleVersion</key><string>$VERSION</string>
   <key>CFBundleShortVersionString</key><string>$VERSION</string>
   <key>CFBundlePackageType</key><string>APPL</string>
-  <key>CFBundleExecutable</key><string>PCMS</string>
+  <key>CFBundleExecutable</key><string>PalmoraHealth</string>
   <key>CFBundleIconFile</key><string>AppIcon</string>
   <key>LSMinimumSystemVersion</key><string>11.0</string>
   <key>LSApplicationCategoryType</key><string>public.app-category.medical</string>

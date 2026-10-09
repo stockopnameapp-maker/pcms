@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { BadgeCheck, CalendarPlus, CircleX, Leaf, ShieldX } from 'lucide-react';
+import { BadgeCheck, CalendarPlus, CircleX, ShieldX } from 'lucide-react';
 import { api, imageUrl } from '../lib/api';
 import { fmtDate, fmtDateTime, label, todayISO, shiftDate } from '../lib/format';
 import { Empty, ErrorBox, Field, Loading, Modal, PageHeader, Panel, Spinner, Status, Tabs, useToast } from '../components/ui';
@@ -142,7 +142,7 @@ export function Verify() {
   return (
     <div className="min-h-screen bg-mist grid place-items-center p-4">
       <div className="panel w-full max-w-md p-6">
-        <div className="flex items-center gap-2 text-canopy-700 mb-5"><Leaf className="w-5 h-5" /><span className="font-cond font-semibold">PCMS · Verifikasi dokumen</span></div>
+        <div className="flex items-center gap-2 text-canopy-700 mb-5"><img src="/brand/mark.png" alt="" className="w-7 h-auto" /><span className="font-cond font-semibold">Palmora Health · Verifikasi dokumen</span></div>
         {state.loading ? <Loading /> : state.error ? (
           <div className="text-center py-4"><ShieldX className="w-10 h-10 mx-auto text-sev-critical" /><p className="font-cond text-[20px] font-semibold mt-2">Tidak terverifikasi</p><p className="text-bark text-[13.5px] mt-1">{state.error}</p></div>
         ) : (
@@ -160,7 +160,7 @@ export function Verify() {
             <p className="text-[11.5px] text-bark mt-3">Nama disamarkan untuk melindungi privasi. Diagnosis tidak ditampilkan.</p>
           </>
         )}
-        <Link to="/" className="block text-center text-[13px] text-canopy-700 mt-5 hover:underline">Masuk ke PCMS</Link>
+        <Link to="/" className="block text-center text-[13px] text-canopy-700 mt-5 hover:underline">Masuk ke Palmora Health</Link>
       </div>
     </div>
   );

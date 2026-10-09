@@ -1,8 +1,8 @@
 #!/bin/bash
-# PCMS launcher for macOS.
-# First launch: creates a private PostgreSQL database in ~/Library/Application Support/PCMS,
-# generates secrets, loads demo data. Every launch: starts PostgreSQL + the PCMS server and
-# opens the browser. A small dialog lets the user open or stop PCMS.
+# Palmora Health launcher for macOS.
+# First launch: creates a private PostgreSQL database in ~/Library/Application Support/Palmora Health,
+# generates secrets, loads demo data. Every launch: starts PostgreSQL + the Palmora Health server and
+# opens the browser. A small dialog lets the user open or stop Palmora Health.
 set -u
 
 CONTENTS="$(cd "$(dirname "$0")/.." && pwd)"
@@ -12,9 +12,9 @@ PLAT="${PCMS_TEST_PLAT:-$PLAT}"   # build-time test hook only
 SRCAPP="$RES/app"
 APPVER="$(cat "$RES/VERSION" 2>/dev/null || echo dev)"
 
-SUP="$HOME/Library/Application Support/PCMS"
+SUP="$HOME/Library/Application Support/Palmora Health"
 APPDIR="$SUP/app"          # working copy of the program files, free of macOS quarantine flags
-LOGDIR="$HOME/Library/Logs/PCMS"
+LOGDIR="$HOME/Library/Logs/Palmora Health"
 PGDATA="$SUP/pgdata"
 RUN="$SUP/run"
 CONF="$SUP/config.env"
@@ -22,6 +22,14 @@ PGPORT=54329
 WEBPORT=8765
 URL="http://localhost:$WEBPORT"
 ICON="$RES/AppIcon.icns"
+# Upgrade from versions named "PCMS": stop them and move their data to the new folders.
+OLDSUP="$HOME/Library/Application Support/PCMS"
+if [ -d "$OLDSUP" ] && [ ! -e "$SUP" ]; then
+  for c in "$OLDSUP"/runtime/*/*/pgsql/bin/pg_ctl; do [ -x "$c" ] && "$c" -D "$OLDSUP/pgdata" -m fast -w stop >/dev/null 2>&1; done
+  /usr/bin/pkill -f "PCMS/app/api/server.mjs" 2>/dev/null
+  mv "$OLDSUP" "$SUP" && rm -rf "$SUP/run/launcher.lock"
+  [ -d "$HOME/Library/Logs/PCMS" ] && [ ! -e "$LOGDIR" ] && mv "$HOME/Library/Logs/PCMS" "$LOGDIR"
+fi
 mkdir -p "$SUP" "$LOGDIR" "$RUN" "$SUP/storage"
 chmod 700 "$SUP"
 exec >>"$LOGDIR/launcher.log" 2>&1
@@ -33,9 +41,9 @@ on run argv
   set msg to item 1 of argv
   set btns to run script ("{" & item 2 of argv & "}")
   try
-    set r to display dialog msg with title "PCMS" buttons btns default button (item 3 of argv) with icon (POSIX file (item 4 of argv))
+    set r to display dialog msg with title "Palmora Health" buttons btns default button (item 3 of argv) with icon (POSIX file (item 4 of argv))
   on error
-    set r to display dialog msg with title "PCMS" buttons btns default button (item 3 of argv)
+    set r to display dialog msg with title "Palmora Health" buttons btns default button (item 3 of argv)
   end try
   return button returned of r
 end run
@@ -43,7 +51,7 @@ OSA
 }
 fail() {
   echo "ERROR: $1"
-  dialog "PCMS tidak dapat dijalankan.
+  dialog "Palmora Health tidak dapat dijalankan.
 
 $1
 
@@ -52,7 +60,7 @@ Log: $LOGDIR" '"Buka folder log", "Tutup"' "Tutup" | grep -q "Buka folder log" &
   exit 1
 }
 
-[ -f "$SRCAPP/api/server.mjs" ] || fail "Komponen aplikasi tidak lengkap. Unduh ulang PCMS lalu seret lagi ke Applications."
+[ -f "$SRCAPP/api/server.mjs" ] || fail "Komponen aplikasi tidak lengkap. Unduh ulang Palmora Health lalu seret lagi ke Applications."
 
 # ---------------------------------------------------------------- runtime (downloaded once, checksum-verified)
 # Official builds: Node.js from nodejs.org, PostgreSQL 16 (with contrib) from the npm registry (embedded-postgres).
@@ -88,7 +96,7 @@ fetch() { # url, sha, dest — two attempts; a corrupted or truncated file is ne
   return $rc
 }
 # Copy the program files out of the app bundle once per version. The copy has the macOS
-# quarantine flag removed, so nothing inside needs approval beyond opening PCMS itself.
+# quarantine flag removed, so nothing inside needs approval beyond opening Palmora Health itself.
 sync_app() {
   [ -f "$APPDIR/.version" ] && [ "$(cat "$APPDIR/.version")" = "$APPVER" ] && [ -f "$APPDIR/api/server.mjs" ] && return 0
   echo "installing program files $APPVER"
@@ -102,9 +110,9 @@ sync_app() {
 ensure_runtime() {
   [ -x "$NODE" ] && [ -x "$PGBIN/postgres" ] && return 0
   echo "installing runtime $RTVER/$PLAT"
-  /usr/bin/osascript -e "display dialog \"Mengunduh komponen PCMS (Node.js dan PostgreSQL, sekitar 100 MB).
+  /usr/bin/osascript -e "display dialog \"Mengunduh komponen Palmora Health (Node.js dan PostgreSQL, sekitar 100 MB).
 
-Ini hanya terjadi sekali dan memerlukan koneksi internet. Tunggu beberapa menit; PCMS akan lanjut otomatis.\" with title \"PCMS\" buttons {\"OK\"} default button \"OK\" giving up after 1800" >/dev/null 2>&1 &
+Ini hanya terjadi sekali dan memerlukan koneksi internet. Tunggu beberapa menit; Palmora Health akan lanjut otomatis.\" with title \"Palmora Health\" buttons {\"OK\"} default button \"OK\" giving up after 1800" >/dev/null 2>&1 &
   NOTE=$!
   DL="$SUP/download.$$"; rm -rf "$DL" "$RT.partial"; rm -rf "$SUP"/download*; mkdir -p "$DL" "$RT.partial"
   fetch "$NODE_URL" "$NODE_SHA" "$DL/node.tgz"; rc1=$?
@@ -112,9 +120,9 @@ Ini hanya terjadi sekali dan memerlukan koneksi internet. Tunggu beberapa menit;
   if [ $rc1 -ne 0 ]; then
     kill $NOTE 2>/dev/null
     [ $rc1 -eq 2 ] && fail "File yang diunduh tidak cocok dengan checksum resmi, sehingga tidak dipasang demi keamanan. Coba lagi nanti."
-    fail "Gagal mengunduh komponen PCMS. Periksa koneksi internet lalu buka PCMS lagi."
+    fail "Gagal mengunduh komponen Palmora Health. Periksa koneksi internet lalu buka Palmora Health lagi."
   fi
-  ( cd "$DL" && tar xzf node.tgz && tar xzf pg.tgz ) || { kill $NOTE 2>/dev/null; fail "Gagal mengekstrak komponen PCMS."; }
+  ( cd "$DL" && tar xzf node.tgz && tar xzf pg.tgz ) || { kill $NOTE 2>/dev/null; fail "Gagal mengekstrak komponen Palmora Health."; }
   cp "$DL"/node-v*/bin/node "$RT.partial/node" && chmod 755 "$RT.partial/node"
   mv "$DL/package/native" "$RT.partial/pgsql"
   # the PostgreSQL package lists its library symlinks in a manifest
@@ -126,7 +134,7 @@ Ini hanya terjadi sekali dan memerlukan koneksi internet. Tunggu beberapa menit;
     }' "$RT.partial" || { kill $NOTE 2>/dev/null; fail "Gagal menyiapkan PostgreSQL."; }
   chmod 755 "$RT.partial/pgsql/bin/"*
   rm -rf "$RT" && mv "$RT.partial" "$RT" && rm -rf "$DL"
-  # drop runtimes of older PCMS versions
+  # drop runtimes of older Palmora Health versions
   for d in "$SUP/runtime/"*; do [ "$d" = "$SUP/runtime/$RTVER" ] || rm -rf "$d"; done
   kill $NOTE 2>/dev/null
 }
@@ -171,7 +179,7 @@ seed_db() {
   echo "seeding"
   /usr/bin/osascript -e "display dialog \"Menyiapkan database dan data demo untuk pertama kali.
 
-Ini memerlukan sekitar 1 menit. Browser akan terbuka otomatis setelah selesai.\" with title \"PCMS\" buttons {\"OK\"} default button \"OK\" giving up after 600" >/dev/null 2>&1 &
+Ini memerlukan sekitar 1 menit. Browser akan terbuka otomatis setelah selesai.\" with title \"Palmora Health\" buttons {\"OK\"} default button \"OK\" giving up after 600" >/dev/null 2>&1 &
   NOTE=$!
   (cd "$APPDIR/db" && "$NODE" scripts/reset.mjs) >>"$LOGDIR/setup.log" 2>&1
   rc=$?
@@ -190,14 +198,15 @@ start_api() {
   ) >>"$LOGDIR/server.log" 2>&1 &
   echo $! > "$RUN/api.pid"
   for i in $(seq 1 60); do api_up && return 0; sleep 1; done
-  fail "Server PCMS tidak merespons. Port $WEBPORT mungkin dipakai aplikasi lain."
+  fail "Server Palmora Health tidak merespons. Port $WEBPORT mungkin dipakai aplikasi lain."
 }
 
 stop_api() {
   [ -f "$RUN/api.pid" ] && kill "$(cat "$RUN/api.pid")" 2>/dev/null
   rm -f "$RUN/api.pid"
   # an orphaned server from a force-quit launcher
-  /usr/bin/pkill -f "PCMS/app/api/server.mjs" 2>/dev/null || true
+  /usr/bin/pkill -f "Palmora Health/app/api/server.mjs" 2>/dev/null || true
+  /usr/bin/pkill -f "PCMS/app/api/server.mjs" 2>/dev/null || true   # pre-rename versions
 }
 stop_all() {
   stop_api
@@ -212,9 +221,9 @@ if ! mkdir "$LOCK" 2>/dev/null; then
   if [ -n "$other" ] && kill -0 "$other" 2>/dev/null; then
     echo "another launcher ($other) is active"
     if api_up; then open "$URL"; else
-      dialog "PCMS sedang disiapkan (mengunduh komponen atau menyiapkan database).
+      dialog "Palmora Health sedang disiapkan (mengunduh komponen atau menyiapkan database).
 
-Tidak perlu membuka PCMS lagi. Browser akan terbuka otomatis setelah selesai." '"OK"' "OK" >/dev/null
+Tidak perlu membuka Palmora Health lagi. Browser akan terbuka otomatis setelah selesai." '"OK"' "OK" >/dev/null
     fi
     exit 0
   fi
@@ -240,24 +249,24 @@ open "$URL"
 
 # ---------------------------------------------------------------- control dialog
 while true; do
-  choice=$(dialog "PCMS sedang berjalan di:
+  choice=$(dialog "Palmora Health sedang berjalan di:
 $URL
 
 Login demo: sng.superadmin  ·  password Demo@12345
 (akun demo lain ada di file \"Baca Dulu\")
 
-Biarkan jendela ini terbuka selama memakai PCMS. Pilih \"Hentikan\" untuk mematikan server." \
-    '"Opsi…", "Hentikan PCMS", "Buka PCMS"' "Buka PCMS")
+Biarkan jendela ini terbuka selama memakai Palmora Health. Pilih \"Hentikan\" untuk mematikan server." \
+    '"Opsi…", "Hentikan Palmora Health", "Buka Palmora Health"' "Buka Palmora Health")
   case "$choice" in
-    "Buka PCMS") open "$URL" ;;
-    "Hentikan PCMS") stop_all; exit 0 ;;
+    "Buka Palmora Health") open "$URL" ;;
+    "Hentikan Palmora Health") stop_all; exit 0 ;;
     "Opsi…")
-      opt=$(/usr/bin/osascript -e 'choose from list {"Buka folder data", "Buka folder log", "Reset data demo (hapus semua data)"} with title "PCMS" with prompt "Pilih tindakan:"' 2>/dev/null)
+      opt=$(/usr/bin/osascript -e 'choose from list {"Buka folder data", "Buka folder log", "Reset data demo (hapus semua data)"} with title "Palmora Health" with prompt "Pilih tindakan:"' 2>/dev/null)
       case "$opt" in
         "Buka folder data") open "$SUP" ;;
         "Buka folder log") open "$LOGDIR" ;;
         "Reset data demo"*)
-          sure=$(dialog "Semua data di PCMS akan dihapus dan diganti dengan data demo baru. Lanjutkan?" '"Batal", "Hapus & reset"' "Batal")
+          sure=$(dialog "Semua data di Palmora Health akan dihapus dan diganti dengan data demo baru. Lanjutkan?" '"Batal", "Hapus & reset"' "Batal")
           if [ "$sure" = "Hapus & reset" ]; then
             ensure_runtime; start_pg
             stop_api; seed_db; start_api; open "$URL"

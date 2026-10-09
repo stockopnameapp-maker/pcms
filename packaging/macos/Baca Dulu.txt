@@ -1,26 +1,26 @@
-PCMS — Plantation Clinic Management System
-==========================================
+Palmora Health — People Health Our Priority
+===========================================
 
 PEMASANGAN (tanpa Terminal)
-1. Seret ikon PCMS ke folder Applications (di jendela ini).
-2. Buka Applications, klik dua kali PCMS.
-   macOS akan menampilkan peringatan karena PCMS belum terdaftar di Apple.
+1. Seret ikon Palmora Health ke folder Applications (di jendela ini).
+2. Buka Applications, klik dua kali Palmora Health.
+   macOS akan menampilkan peringatan karena Palmora Health belum terdaftar di Apple.
    Klik "Selesai" (Done). Jangan pilih "Pindahkan ke Sampah".
 3. Buka Pengaturan Sistem (System Settings) → Privasi & Keamanan
    (Privacy & Security). Gulir ke bawah ke bagian Keamanan, akan ada tulisan
-   "PCMS diblokir…". Klik "Tetap Buka" (Open Anyway), masukkan password Mac,
+   "Palmora Health diblokir…". Klik "Tetap Buka" (Open Anyway), masukkan password Mac,
    lalu klik "Buka" (Open).
-   - macOS 14 atau lebih lama: cukup klik kanan PCMS → Buka → Buka.
-4. Persetujuan ini hanya sekali. Berikutnya PCMS dibuka seperti aplikasi biasa.
+   - macOS 14 atau lebih lama: cukup klik kanan Palmora Health → Buka → Buka.
+4. Persetujuan ini hanya sekali. Berikutnya Palmora Health dibuka seperti aplikasi biasa.
 
 PEMBUKAAN PERTAMA (perlu internet, sekali saja)
-- PCMS mengunduh Node.js dan PostgreSQL resmi untuk Mac Anda (sekitar 100 MB)
+- Palmora Health mengunduh Node.js dan PostgreSQL resmi untuk Mac Anda (sekitar 100 MB)
   dan memeriksa checksum-nya, lalu menyiapkan database lokal dan data demo.
   Total sekitar 1–5 menit tergantung kecepatan internet.
-- Setelah itu PCMS berjalan sepenuhnya offline.
+- Setelah itu Palmora Health berjalan sepenuhnya offline.
 - Browser akan terbuka otomatis di http://localhost:8765
-- Jendela kecil "PCMS sedang berjalan" tetap terbuka selama Anda memakai
-  aplikasi. Pilih "Hentikan PCMS" untuk mematikan server.
+- Jendela kecil "Palmora Health sedang berjalan" tetap terbuka selama Anda memakai
+  aplikasi. Pilih "Hentikan Palmora Health" untuk mematikan server.
 
 AKUN DEMO (password semua: Demo@12345)
   sng.superadmin            Super Admin
@@ -37,19 +37,19 @@ AKUN DEMO (password semua: Demo@12345)
 
 DATA & LOG
 - Data (database, lampiran, kunci rahasia):
-    ~/Library/Application Support/PCMS
+    ~/Library/Application Support/Palmora Health
 - Log:
-    ~/Library/Logs/PCMS
-- Menu "Opsi…" pada jendela PCMS: buka folder data/log, atau reset data demo.
+    ~/Library/Logs/Palmora Health
+- Menu "Opsi…" pada jendela Palmora Health: buka folder data/log, atau reset data demo.
 
 PERSYARATAN
 - macOS 11 Big Sur atau lebih baru, Apple Silicon (M1/M2/M3/M4) atau Intel.
 - Port 8765 dan 54329 tidak dipakai aplikasi lain.
-- Tidak perlu memasang Node.js atau PostgreSQL sendiri; PCMS mengunduhnya otomatis.
+- Tidak perlu memasang Node.js atau PostgreSQL sendiri; Palmora Health mengunduhnya otomatis.
 
 MENGHAPUS
-Hentikan PCMS, hapus PCMS dari Applications, lalu hapus folder
-~/Library/Application Support/PCMS dan ~/Library/Logs/PCMS.
+Hentikan Palmora Health, hapus Palmora Health dari Applications, lalu hapus folder
+~/Library/Application Support/Palmora Health dan ~/Library/Logs/Palmora Health.
 
 CATATAN
 Versi ini untuk evaluasi dan demo di satu komputer. Untuk dipakai banyak
