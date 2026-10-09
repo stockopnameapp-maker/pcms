@@ -18,8 +18,9 @@ limitations (in Bahasa Indonesia): [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/stockopnameapp-maker/pcms?quickstart=1)
 
 Open this repository in **GitHub Codespaces**: green **Code** button → **Codespaces** → **Create codespace on main**.
-The first start takes about 3–5 minutes (install, database, demo data). PCMS then opens in a new browser tab;
-if it doesn't, open the **Ports** tab and click the globe icon next to port **8080**.
+The first start takes about 3–5 minutes (install, database, demo data). A terminal then shows
+**"PCMS siap. Buka: https://…app.github.dev"** — click that link (or open the **Ports** tab → globe icon next to port **8080**).
+If nothing appears, open a terminal (Ctrl+`) and run `bash .devcontainer/start.sh`.
 Log in as `sng.superadmin` / `Demo@12345`. Stop the codespace when you're done (free accounts include monthly hours).
 
 ## Quick start

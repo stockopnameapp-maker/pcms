@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Runs once when the Codespace is created: install, configure, load demo data, build the web app.
 set -euo pipefail
+rm -f /tmp/pcms-setup.ok
 cd "$(dirname "$0")/.."
 ADMIN_URL="${PG_ADMIN_URL:-postgres://postgres:postgres@localhost:5432/postgres}"
 PORT="${PCMS_PORT:-8080}"
@@ -41,4 +42,5 @@ echo "▶ Creating database and demo data"
 npm run db:reset
 echo "▶ Building web app"
 npm run build
+touch /tmp/pcms-setup.ok
 echo "✔ PCMS ready — it starts automatically on port $PORT"
