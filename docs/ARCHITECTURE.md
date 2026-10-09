@@ -378,7 +378,7 @@ pcms/                                   monorepo (npm workspaces)
 ├── docs/ARCHITECTURE.md                dokumen ini
 ├── packages/db/
 │   ├── bootstrap.sql                   role pcms_owner / pcms_app + database
-│   ├── migrations/0001…0018_*.sql      skema, RLS, role, layanan aplikasi, analitik, perbaikan
+│   ├── migrations/0001…0019_*.sql      skema, RLS, role, layanan aplikasi, analitik, perbaikan
 │   ├── seed/                           generator data demo deterministik
 │   ├── scripts/                        migrate (checksum), reset
 │   └── test/                           43 test keamanan & integritas (sebagai pcms_app)

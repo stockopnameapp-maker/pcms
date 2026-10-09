@@ -188,6 +188,10 @@ Ini memerlukan sekitar 1 menit. Browser akan terbuka otomatis setelah selesai.\"
   date > "$SUP/.seeded"
   echo "$DEMOVER" > "$SUP/.demo-version"
 }
+# schema upgrades of an existing database (idempotent; already-applied migrations are checksum-verified)
+migrate_db() {
+  (cd "$APPDIR/db" && "$NODE" scripts/migrate.mjs) >>"$LOGDIR/setup.log" 2>&1 || fail "Gagal memperbarui struktur database."
+}
 # demo data generations: 1 = Sawit Nusantara / Andalas (≤ 1.1.0), 2 = Kalimantan Agro Sukses Group
 DEMOVER=2
 offer_new_demo() {
@@ -255,6 +259,7 @@ else
   start_pg
   [ -f "$SUP/.seeded" ] || seed_db
   offer_new_demo
+  migrate_db
   start_api
 fi
 open "$URL"
