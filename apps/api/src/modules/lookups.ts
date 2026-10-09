@@ -9,12 +9,13 @@ interface Lookup { sql: (q: Q, p: (v: unknown) => string) => string }
 // automatically limited to what the user may see.
 const term = (q: Q, p: (v: unknown) => string) => p(`%${(q.q ?? '').trim()}%`);
 const LOOKUPS: Record<string, Lookup> = {
-  org_unit: { sql: (q, p) => `SELECT u.id, u.name AS label, u.unit_type || ' · ' || u.code AS sub FROM org_unit u WHERE u.deleted_at IS NULL
+  org_unit: { sql: (q, p) => `SELECT u.id, app.unit_display_name(u.id) AS label, u.unit_type || ' · ' || u.code AS sub FROM org_unit u WHERE u.deleted_at IS NULL
       ${q.types ? `AND u.unit_type = ANY(${p(q.types.split(','))}::text[])` : ''} AND (u.name ILIKE ${term(q, p)} OR u.code ILIKE ${term(q, p)}) ORDER BY u.depth, u.name` },
-  clinic: { sql: (q, p) => `SELECT u.id, u.name AS label, cp.operational_status AS sub FROM org_unit u JOIN clinic_profile cp ON cp.id = u.id
-      WHERE u.deleted_at IS NULL AND u.name ILIKE ${term(q, p)} ORDER BY u.name` },
-  stock_site: { sql: (q, p) => `SELECT u.id, u.name AS label, u.unit_type AS sub FROM org_unit u WHERE u.unit_type IN ('CLINIC','WAREHOUSE') AND u.deleted_at IS NULL
-      AND u.name ILIKE ${term(q, p)} ORDER BY u.unit_type DESC, u.name` },
+  // clinic names repeat across PTs ("Klinik Rayon A"), so the label carries the PT code: "Klinik Rayon A (BCPJ)"
+  clinic: { sql: (q, p) => `SELECT u.id, app.unit_display_name(u.id) AS label, cp.operational_status AS sub FROM org_unit u JOIN clinic_profile cp ON cp.id = u.id
+      WHERE u.deleted_at IS NULL AND (u.name ILIKE ${term(q, p)} OR u.code ILIKE ${term(q, p)}) ORDER BY 2` },
+  stock_site: { sql: (q, p) => `SELECT u.id, app.unit_display_name(u.id) AS label, u.unit_type AS sub FROM org_unit u WHERE u.unit_type IN ('CLINIC','WAREHOUSE') AND u.deleted_at IS NULL
+      AND (u.name ILIKE ${term(q, p)} OR u.code ILIKE ${term(q, p)}) ORDER BY u.unit_type DESC, 2` },
   employee: { sql: (q, p) => q.id ? `SELECT id, employee_no || ' · ' || full_name AS label, NULL AS sub FROM app.employee_brief(${p(q.id)})`
       : `SELECT * FROM app.employee_pick(${p(q.q ?? '')}, 25)` },
   patient: { sql: (q, p) => `SELECT p.id, p.full_name AS label, p.mrn || ' · ' || p.patient_type AS sub FROM patient p WHERE p.deleted_at IS NULL

@@ -3,9 +3,9 @@ import { api, auth } from '../lib/api';
 import { ErrorBox, Field, Spinner } from '../components/ui';
 
 const DEMO = [
-  ['sng.corporate', 'Manajemen korporat'], ['sng.meddirector', 'Medical Director'], ['sng.estate.snl-e01', 'Estate Manager'],
-  ['sng.dr.snl-e01-kln', 'Dokter & kepala klinik'], ['sng.nurse1.snl-e01-kln', 'Perawat'], ['sng.apt.snl-e01-kln', 'Apoteker'],
-  ['sng.hrmanager.snl', 'HR Manager'], ['sng.hseofficer.snl-e01', 'HSE Officer'], ['sng.superadmin', 'Super Admin'], ['sng.employee', 'Karyawan (portal)'],
+  ['kas.corporate', 'Manajemen korporat'], ['kas.meddirector', 'Medical Director'], ['kas.estate.bcpj-ra', 'Estate Manager'],
+  ['kas.dr.bcpj-central', 'Dokter Klinik Central'], ['kas.dr.bcpj-ra-kln', 'Dokter Klinik Rayon A'], ['kas.nurse1.bcpj-ra-kln', 'Perawat'], ['kas.apt.bcpj-ra-kln', 'Apoteker'],
+  ['kas.hrmanager.bcpj', 'HR Manager'], ['kas.hseofficer.bcpj-ra', 'HSE Officer'], ['kas.superadmin', 'Super Admin'], ['kas.employee', 'Karyawan (portal)'],
 ];
 
 export default function Login() {

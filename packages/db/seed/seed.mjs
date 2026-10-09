@@ -95,28 +95,17 @@ const R = Object.fromEntries(ORDER.map(t => [t, []]));
 const add = (table, row) => { R[table].push(row); return row; };
 
 // ------------------------------------------------------------------ organisation blueprint
+// One group, two PTs. Each PT: Klinik Central (also serves the PKS and the head office) and six Rayon (= kebun) each with its own clinic.
 const BLUEPRINT = [
-  { code: 'SNG', name: 'Sawit Nusantara Group', legal: 'PT Sawit Nusantara Group Tbk', city: 'Pekanbaru', province: 'Riau', pts: [
-    { code: 'SNL', name: 'PT Sawit Nusantara Lestari', city: 'Pekanbaru', province: 'Riau', regions: [
-      { code: 'SNL-R1', name: 'Region Riau', estates: [['SNL-E01', 'Kebun Sei Rokan', 'Rokan Hulu', 'Riau', 0.92, 100.35], ['SNL-E02', 'Kebun Tapung Raya', 'Kampar', 'Riau', 0.55, 101.2]] },
-      { code: 'SNL-R2', name: 'Region Jambi', estates: [['SNL-E03', 'Kebun Batang Hari', 'Batanghari', 'Jambi', -1.7, 103.1]] }],
-      mill: ['SNL-M01', 'PKS Sei Rokan', 'Rokan Hulu', 'Riau'] },
-    { code: 'ABM', name: 'PT Agro Borneo Makmur', city: 'Sampit', province: 'Kalimantan Tengah', regions: [
-      { code: 'ABM-R1', name: 'Region Kalimantan Tengah', estates: [['ABM-E01', 'Kebun Sampit Jaya', 'Kotawaringin Timur', 'Kalimantan Tengah', -2.53, 112.95], ['ABM-E02', 'Kebun Seruyan Indah', 'Seruyan', 'Kalimantan Tengah', -2.3, 112.3]] }],
-      mill: ['ABM-M01', 'PKS Sampit', 'Kotawaringin Timur', 'Kalimantan Tengah'] },
-    { code: 'SHP', name: 'PT Sumatera Hijau Plantation', city: 'Rantauprapat', province: 'Sumatera Utara',
-      estates: [['SHP-E01', 'Kebun Labuhan Batu', 'Labuhanbatu', 'Sumatera Utara', 2.1, 99.85]],
-      mill: ['SHP-M01', 'PKS Labuhan Batu', 'Labuhanbatu', 'Sumatera Utara'] },
-  ] },
-  { code: 'AAG', name: 'Andalas Agro Group', legal: 'PT Andalas Agro Group', city: 'Padang', province: 'Sumatera Barat', pts: [
-    { code: 'AAS', name: 'PT Andalas Agro Sejahtera', city: 'Padang', province: 'Sumatera Barat', regions: [
-      { code: 'AAS-R1', name: 'Region Sumatera Barat', estates: [['AAS-E01', 'Kebun Pasaman', 'Pasaman Barat', 'Sumatera Barat', 0.1, 99.8], ['AAS-E02', 'Kebun Ophir', 'Pasaman Barat', 'Sumatera Barat', 0.05, 99.9]] }],
-      mill: ['AAS-M01', 'PKS Ophir', 'Pasaman Barat', 'Sumatera Barat'] },
-    { code: 'RPU', name: 'PT Riau Palma Utama', city: 'Siak', province: 'Riau',
-      estates: [['RPU-E01', 'Kebun Siak Sri Indrapura', 'Siak', 'Riau', 0.8, 102.05], ['RPU-E02', 'Kebun Kandis', 'Siak', 'Riau', 0.95, 101.25]],
-      mill: ['RPU-M01', 'PKS Kandis', 'Siak', 'Riau'] },
+  { code: 'KAS', name: 'Kalimantan Agro Sukses Group', legal: 'Kalimantan Agro Sukses Group', city: 'Sampit', province: 'Kalimantan Tengah', pts: [
+    { code: 'BCPJ', name: 'PT Borneo Citra Persada Jaya', city: 'Sampit', province: 'Kalimantan Tengah', area: 'Kotawaringin Timur', lat: -2.42, lng: 112.78,
+      mill: ['BCPJ-PKS', 'PKS Borneo Citra Persada Jaya'] },
+    { code: 'BCPA', name: 'PT Borneo Citra Persada Abadi', city: 'Kuala Pembuang', province: 'Kalimantan Tengah', area: 'Seruyan', lat: -2.55, lng: 112.35,
+      mill: ['BCPA-PKS', 'PKS Borneo Citra Persada Abadi'] },
   ] },
 ];
+const RAYONS = ['A', 'B', 'C', 'D', 'E', 'F'];
+const FULL = c => c.kind === 'ESTATE' || c.full;   // clinic with lab, inpatient beds, ambulance
 
 const ctx = { tenants: [] };   // structured handles for later steps
 
@@ -139,34 +128,29 @@ for (const bp of BLUEPRINT) {
     P.dept = unit(tenant, company, 'DEPARTMENT', `${pt.code}-HRGA`, `Departemen HR & GA ${pt.code}`, { city: pt.city, province: pt.province });
     T.depts.push(P.dept);
 
-    const estateDefs = [];
-    for (const rg of pt.regions || []) {
-      const region = unit(tenant, company, 'REGION', rg.code, rg.name, { province: pt.province });
-      for (const e of rg.estates) estateDefs.push([region, e]);
-    }
-    for (const e of pt.estates || []) estateDefs.push([company, e]);
-
-    for (const [parent, [code, name, city, province, lat, lng]] of estateDefs) {
-      const estate = unit(tenant, parent, 'ESTATE', code, name, { city, province, latitude: lat, longitude: lng, area_ha: int(4500, 12000),
-        address: `Desa ${faker.location.city()}, Kec. ${faker.location.city()}, ${city}` });
-      const E = { estate, company, P, province, divisions: [] };
+    RAYONS.forEach((L, i) => {
+      const code = `${pt.code}-R${L}`, name = `Rayon ${L}`;
+      const lat = round(pt.lat + (i % 3) * 0.08, 6), lng = round(pt.lng + Math.floor(i / 3) * 0.1 + (i % 3) * 0.03, 6);
+      const estate = unit(tenant, company, 'ESTATE', code, name, { city: pt.area, province: pt.province, latitude: lat, longitude: lng, area_ha: int(3500, 7000),
+        address: `Desa ${faker.location.city()}, Kec. ${faker.location.city()}, ${pt.area}` });
+      const E = { estate, company, P, province: pt.province, divisions: [] };
       for (let d = 1; d <= 2; d++) {
-        const div = unit(tenant, estate, 'DIVISION', `${code}-DIV${d}`, `Divisi ${['I', 'II'][d - 1]} ${name.replace('Kebun ', '')}`, { area_ha: int(1800, 4000), latitude: round(lat + d * 0.02, 6), longitude: round(lng + d * 0.02, 6) });
+        const div = unit(tenant, estate, 'DIVISION', `${code}-DIV${d}`, `Divisi ${['I', 'II'][d - 1]} ${name}`, { area_ha: int(1500, 3200), latitude: round(lat + d * 0.02, 6), longitude: round(lng + d * 0.02, 6) });
         E.divisions.push(div); T.divisions.push({ div, E });
       }
-      E.clinic = unit(tenant, estate, 'CLINIC', `${code}-KLN`, `Klinik ${name.replace('Kebun ', '')}`, { city, province, phone: phone(), latitude: round(lat + 0.01, 6), longitude: round(lng + 0.01, 6),
-        address: `Emplasmen ${name}, ${city}` });
-      E.clinicMeta = { type: 'MAIN', kind: 'ESTATE', E };
+      E.clinic = unit(tenant, estate, 'CLINIC', `${code}-KLN`, `Klinik ${name}`, { city: pt.area, province: pt.province, phone: phone(), latitude: round(lat + 0.01, 6), longitude: round(lng + 0.01, 6),
+        address: `Emplasmen ${name}, ${pt.name}, ${pt.area}` });
       T.estates.push(E); P.estates.push(E);
-      T.clinics.push({ unit: E.clinic, kind: 'ESTATE', E, province, company });
-    }
-    const [mcode, mname, mcity, mprov] = pt.mill;
-    const millParent = P.estates[0].estate;     // mill located inside the first estate
-    const mill = unit(tenant, millParent, 'MILL', mcode, mname, { city: mcity, province: mprov });
-    const millClinic = unit(tenant, mill, 'CLINIC', `${mcode}-KLN`, `Klinik ${mname}`, { city: mcity, province: mprov, phone: phone() });
-    const M = { mill, company, P, province: mprov, clinic: millClinic, estate: P.estates[0] };
+      T.clinics.push({ unit: E.clinic, kind: 'ESTATE', E, province: pt.province, company });
+    });
+    const [mcode, mname] = pt.mill;
+    const mill = unit(tenant, company, 'MILL', mcode, mname, { city: pt.area, province: pt.province, latitude: round(pt.lat - 0.03, 6), longitude: round(pt.lng - 0.03, 6) });
+    const central = unit(tenant, company, 'CLINIC', `${pt.code}-CENTRAL`, 'Klinik Central', { city: pt.city, province: pt.province, phone: phone(),
+      latitude: round(pt.lat - 0.02, 6), longitude: round(pt.lng - 0.02, 6), address: `Kantor Pusat ${pt.name}, ${pt.city}` });
+    const M = { mill, company, P, province: pt.province, clinic: central, estate: P.estates[0] };
+    P.central = central;
     T.mills.push(M);
-    T.clinics.push({ unit: millClinic, kind: 'MILL', M, province: mprov, company });
+    T.clinics.push({ unit: central, kind: 'MILL', full: true, M, province: pt.province, company });
   }
 }
 
@@ -174,13 +158,13 @@ for (const bp of BLUEPRINT) {
 const HOURS = { mon: [['07:00', '15:00']], tue: [['07:00', '15:00']], wed: [['07:00', '15:00']], thu: [['07:00', '15:00']], fri: [['07:00', '11:30'], ['13:30', '15:00']], sat: [['07:00', '12:00']], sun: [] };
 for (const T of ctx.tenants) {
   for (const C of T.clinics) {
-    const estate = C.kind === 'ESTATE';
-    const status = C.unit.code === 'SHP-M01-KLN' ? 'EMERGENCY_ONLY' : 'OPEN';
-    add('clinic_profile', { id: C.unit.id, tenant_id: T.tenant.id, clinic_type: estate ? 'MAIN' : 'MILL', operational_status: status,
+    const estate = FULL(C);
+    const status = C.unit.code === 'BCPA-RF-KLN' ? 'EMERGENCY_ONLY' : 'OPEN';
+    add('clinic_profile', { id: C.unit.id, tenant_id: T.tenant.id, clinic_type: C.kind === 'ESTATE' ? 'PRIMARY' : 'MAIN', operational_status: status,
       license_no: `503/${int(100, 999)}/DPMPTSP/${2024 + int(0, 2)}`, license_valid_until: isoDate(addDays(NOW, int(200, 1500))),
       emergency_phone: phone(), bed_capacity: estate ? 6 : 2, has_pharmacy: true, has_laboratory: estate, has_inpatient: estate,
       operating_hours: { ...HOURS, emergency: '24h' },
-      service_area_unit_ids: estate ? C.E.divisions.map(d => d.id) : [C.M.mill.id] });
+      service_area_unit_ids: C.kind === 'ESTATE' ? C.E.divisions.map(d => d.id) : [C.M.mill.id, C.M.P.dept.id] });
     C.rooms = {};
     const rooms = estate ? [['REG', 'Pendaftaran', 'REGISTRATION'], ['TRI', 'Ruang Triase', 'TRIAGE'], ['K1', 'Ruang Periksa 1', 'CONSULTATION'], ['K2', 'Ruang Periksa 2', 'CONSULTATION'],
       ['UGD', 'Ruang Tindakan / UGD', 'EMERGENCY'], ['RI', 'Ruang Rawat Inap', 'INPATIENT'], ['APT', 'Apotek', 'PHARMACY'], ['LAB', 'Laboratorium', 'LABORATORY']]
@@ -224,7 +208,7 @@ for (const T of ctx.tenants) {
   T.suppliers = ['PT Kimia Farma Trading & Distribution', 'PT Anugerah Pharmindo Lestari', 'PT Enseval Putera Megatrading', 'PT Parit Padang Global', 'PT Bina San Prima', 'PT Antarmitra Sembada']
     .map((n, i) => add('supplier', { id: randomUUID(), tenant_id: tid, code: `SUP-${String(i + 1).padStart(3, '0')}`, name: n, npwp: faker.string.numeric(15), contact_name: person(pick(['M', 'F']), 30, 55).name, phone: phone(), email: `order${i + 1}@${T.code.toLowerCase()}-supplier.co.id`, address: faker.location.streetAddress() }));
 
-  const hospitals = T.code === 'SNG' ? HOSPITALS.slice(0, 10) : HOSPITALS.slice(10, 20);
+  const hospitals = HOSPITALS;
   T.hospitals = hospitals.map(([name, type, cls, city, province], i) => add('hospital', { id: randomUUID(), tenant_id: tid, code: `RS-${String(i + 1).padStart(3, '0')}`, name, hospital_type: type, hospital_class: cls,
     is_partner: chance(0.6), is_bpjs: true, has_icu: cls === 'A' || cls === 'B', has_er: type !== 'LAB', city, province, phone: phone(), address: `Jl. ${faker.location.street()}, ${city}` }));
 
@@ -234,7 +218,7 @@ for (const T of ctx.tenants) {
 }
 
 // ------------------------------------------------------------------ employees & families
-const EMP_PLAN = { SNG: { perEstate: 80, perMill: 30, perDept: 10 }, AAG: { perEstate: 80, perMill: 30, perDept: 10 } };
+const EMP_PLAN = { KAS: { perEstate: 74, perMill: 40, perDept: 16 } };
 const fieldPositions = POSITIONS.filter(p => p[4] > 0).map(p => [p[0], p[4]]);
 for (const T of ctx.tenants) {
   T.employees = [];
@@ -268,7 +252,7 @@ for (const T of ctx.tenants) {
     for (let i = 0; i < EMP_PLAN[T.code].perMill; i++) mk(M.mill, weighted(MILL_POSITIONS), M.estate, C, M.province);
   }
   for (const P of T.pts) {
-    const C = T.clinics.find(c => c.unit.id === P.estates[0].clinic.id);
+    const C = T.clinics.find(c => c.unit.id === P.central.id);   // head-office staff use Klinik Central
     for (let i = 0; i < EMP_PLAN[T.code].perDept; i++) mk(P.dept, pick(['STAF_KANTOR', 'STAF_KANTOR', 'ASISTEN', 'KRANI', 'SATPAM']), P.estates[0], C, P.province);
   }
   // families
@@ -292,7 +276,7 @@ for (const T of ctx.tenants) {
 for (const T of ctx.tenants) {
   T.staff = [];
   for (const C of T.clinics) {
-    const estate = C.kind === 'ESTATE';
+    const estate = FULL(C);
     C.doctors = []; C.nurses = []; C.pharmacists = []; C.drivers = [];
     const mkStaff = (type, list, prefix, suffix) => {
       const g = type === 'DOCTOR' ? pick(['M', 'F']) : type === 'NURSE' ? (chance(0.65) ? 'F' : 'M') : type === 'AMBULANCE_DRIVER' ? 'M' : pick(['M', 'F']);
@@ -361,7 +345,7 @@ for (const T of ctx.tenants) {
     C.nurses.forEach((s, i) => { s._user = user(T, `${t}.nurse${i + 1}.${c}`, s.full_name, C.unit, [['NURSE', C.unit]]); });
     C.pharmacists.forEach(s => { s._user = user(T, `${t}.apt.${c}`, `apt. ${s.full_name}`, C.unit, [['PHARMACIST', C.unit]]); });
     C.drivers.forEach(s => { s._user = user(T, `${t}.driver.${c}`, s.full_name, C.unit, [['AMBULANCE_DRIVER', C.unit]]); });
-    if (C.kind === 'ESTATE') user(T, `${t}.mro.${c}`, nm(), C.unit, [['MEDICAL_RECORD_OFFICER', C.unit]]);
+    if (FULL(C)) user(T, `${t}.mro.${c}`, nm(), C.unit, [['MEDICAL_RECORD_OFFICER', C.unit]]);
     C.manager = head._user;
   }
   // warehouse pharmacist (central stock)
@@ -383,13 +367,13 @@ for (const T of ctx.tenants) {
       blood_type: weighted([['O+', 38], ['A+', 26], ['B+', 28], ['AB+', 6], ['UNKNOWN', 2]]), phone: e.phone, address: e.address, payer_type: 'COMPANY', bpjs_kesehatan_no: e.bpjs_kesehatan_no,
       _emp: e, _clinic: e._clinic, _risk: e._risk });
   }
-  const famTarget = T.code === 'SNG' ? 510 : 340;
+  const famTarget = 910;
   const fams = faker.helpers.shuffle(T.families).slice(0, famTarget);
   for (const f of fams) {
     f._patient = P({ patient_type: f.relationship === 'SPOUSE' ? 'SPOUSE' : 'CHILD', family_member_id: f.id, primary_clinic_id: f._emp._clinic.unit.id, nik: f.nik, full_name: f.full_name, gender: f.gender,
       birth_date: f.birth_date, blood_type: 'UNKNOWN', phone: f.phone, address: f._emp.address, payer_type: 'COMPANY', bpjs_kesehatan_no: f.bpjs_kesehatan_no, _emp: f._emp, _clinic: f._emp._clinic });
   }
-  const contractors = T.code === 'SNG' ? 60 : 40, visitors = T.code === 'SNG' ? 30 : 20;
+  const contractors = 60, visitors = 30;
   for (let i = 0; i < contractors + visitors; i++) {
     const C = pick(T.clinics); const g = chance(0.85) ? 'M' : 'F'; const p = person(g, 20, 55);
     const contractor = i < contractors;
@@ -432,7 +416,7 @@ function chooseDx(T, clinic, patient, day, daysAgo) {
   const adj = pairs.map(([c, w]) => {
     let f = 1;
     // Early-warning demo 1: ISPA outbreak at Klinik Sei Rokan in the last 14 days
-    if (c === 'J06.9' && clinic.unit.code === 'SNL-E01-KLN' && daysAgo < 14) f = 4;
+    if (c === 'J06.9' && clinic.unit.code === 'BCPJ-RA-KLN' && daysAgo < 14) f = 4;
     // Early-warning demo 2: dermatitis among sprayers rising in the last 30 days
     if ((c === 'L24.9' || c === 'L23.9') && patient._risk === 'SPRAYER') f = daysAgo < 30 ? 9 : 3;
     // rainy-season malaria/dengue bump for Kalimantan
@@ -448,7 +432,7 @@ function chooseDx(T, clinic, patient, day, daysAgo) {
 const ICD_TITLE = Object.fromEntries(ICD10.map(r => [r[0], r[2]]));
 const stockUse = new Map();              // `${unitId}|${medId}` → qty dispensed
 const dispenseQueue = [];                // dispense txns to place after opening stock
-const visitsPerDay = c => (c.kind === 'ESTATE' ? 5.2 : 2.6);
+const visitsPerDay = c => (c.full ? 4.5 : c.kind === 'ESTATE' ? 4.2 : 2.6);
 
 for (const T of ctx.tenants) {
   const patientsByClinic = new Map();
@@ -462,8 +446,8 @@ for (const T of ctx.tenants) {
       const pool = patientsByClinic.get(C.unit.id) || [];
       if (!pool.length) continue;
       let n = Math.round(visitsPerDay(C) * (dow === 0 ? 0.25 : dow === 6 ? 0.6 : 1) * faker.number.float({ min: 0.6, max: 1.4 }));
-      if (C.unit.code === 'SHP-M01-KLN') n = Math.round(n * 0.4);   // emergency-only clinic
-      if (C.unit.code === 'SNL-E01-KLN' && daysAgo < 14) n = Math.round(n * 1.3); // outbreak drives extra visits
+      if (C.unit.code === 'BCPA-RF-KLN') n = Math.round(n * 0.4);   // emergency-only clinic
+      if (C.unit.code === 'BCPJ-RA-KLN' && daysAgo < 14) n = Math.round(n * 1.3); // outbreak drives extra visits
       let qn = 0;
       const pfx = { NORMAL: 'A', PRIORITY: 'P', EMERGENCY: 'E' };
       const qcount = { A: 0, P: 0, E: 0 };
@@ -670,7 +654,7 @@ for (const T of ctx.tenants) {
       for (const code of tests) add('lab_result', { id: randomUUID(), tenant_id: T.tenant.id, lab_order_id: order.id, lab_test_id: T.labTests[code].id, created_at: ts(at) });
       continue;
     }
-    if (!tests || !e._clinic.unit || e._clinic.kind !== 'ESTATE' || e.status !== 'SIGNED' || !chance(0.7)) continue;
+    if (!tests || !e._clinic.unit || !FULL(e._clinic) || e.status !== 'SIGNED' || !chance(0.7)) continue;
     const at = new Date(e.started_at);
     const order = add('lab_order', { id: randomUUID(), tenant_id: T.tenant.id, order_no: docNo(T.code, 'LAB', e._clinic.unit.code, e._day.slice(0, 7).replace('-', '')), clinic_id: e.clinic_id, patient_id: e.patient_id,
       encounter_id: e.id, ordered_by: e.doctor_id, ordered_at: ts(at), priority: e.encounter_type === 'EMERGENCY' ? 'STAT' : 'ROUTINE', status: 'VERIFIED', clinical_info: e.assessment, created_at: ts(at) });
@@ -703,7 +687,7 @@ const ACT = { PEMANEN: 'HARVESTING', PENGUTIP: 'HARVESTING', PERAWATAN: 'PRUNING
 for (const T of ctx.tenants) {
   T.accidents = [];
   const injuryEnc = T.encounters.filter(e => e._injury && e._patient.employee_id && e.status === 'SIGNED');
-  const chosen = faker.helpers.shuffle(injuryEnc).slice(0, T.code === 'SNG' ? 78 : 52);
+  const chosen = faker.helpers.shuffle(injuryEnc).slice(0, 90);
   const mkAccident = (e, emp, occurred, kind) => {
     const daysAgo = Math.floor((NOW - occurred) / 86400000);
     const severity = kind === 'NEAR_MISS' ? 'MINOR' : weighted([['MINOR', 60], ['MODERATE', 28], ['SERIOUS', 10], ['MAJOR', 2]]);
@@ -733,13 +717,13 @@ for (const T of ctx.tenants) {
   };
   for (const e of chosen) mkAccident(e, e._patient._emp, new Date(new Date(e.started_at).getTime() - int(20, 120) * 60000), 'INJURY');
   const fieldEmps = T.employees.filter(x => ['PEMANEN', 'PENYEMPROT', 'DRIVER', 'OPERATOR_PKS', 'OPERATOR_AB'].includes(x._pos));
-  for (let i = 0; i < (T.code === 'SNG' ? 12 : 8); i++) mkAccident(null, pick(fieldEmps), atTime(isoDate(addDays(NOW, -int(1, DAYS))), int(7, 15), int(0, 59)), 'NEAR_MISS');
+  for (let i = 0; i < 14; i++) mkAccident(null, pick(fieldEmps), atTime(isoDate(addDays(NOW, -int(1, DAYS))), int(7, 15), int(0, 59)), 'NEAR_MISS');
 
   // referrals: serious accidents + ~3% of other encounters
   T.referrals = [];
   const signed = T.encounters.filter(e => e.status === 'SIGNED');
   const refCandidates = signed.filter(e => (e.accident_id && T.accidents.find(a => a.id === e.accident_id)?.severity !== 'MINOR') || ['A90', 'B54', 'I10', 'E11.9', 'J45.9', 'R50.9', 'N39.0'].includes(e._dx));
-  for (const e of faker.helpers.shuffle(refCandidates).slice(0, T.code === 'SNG' ? 180 : 120)) {
+  for (const e of faker.helpers.shuffle(refCandidates).slice(0, 200)) {
     const d = new Date(e.started_at); const daysAgo = e._daysAgo;
     const hosp = pick(T.hospitals.filter(h => h.hospital_type !== 'LAB'));
     const status = daysAgo < 2 ? pick(['ISSUED', 'AT_HOSPITAL']) : daysAgo < 7 ? pick(['IN_TREATMENT', 'INPATIENT', 'FOLLOW_UP']) : weighted([['RETURNED', 45], ['CLOSED', 50], ['CANCELLED', 5]]);
@@ -785,7 +769,7 @@ for (const T of ctx.tenants) {
   }
   for (const mc of R.medical_certificate) if (mc.fit_status === 'FIT_WITH_RESTRICTION' && !mc.restrictions) mc.restrictions = 'Pekerjaan ringan selama 7 hari, hindari mengangkat beban > 10 kg';
   // general medical certificates (health statements, fit-to-work for drivers)
-  for (const e of faker.helpers.shuffle(signed.filter(x => x._patient.employee_id)).slice(0, T.code === 'SNG' ? 110 : 70)) {
+  for (const e of faker.helpers.shuffle(signed.filter(x => x._patient.employee_id)).slice(0, 120)) {
     const emp = e._patient._emp;
     const type = emp._pos === 'DRIVER' || emp._pos === 'OPERATOR_AB' ? 'FIT_TO_WORK' : pick(['MEDICAL_CERTIFICATE', 'HEALTH_STATEMENT']);
     add('medical_certificate', { id: randomUUID(), tenant_id: T.tenant.id, certificate_no: docNo(T.code, 'SKD', e._clinic.unit.code, e._day.slice(0, 4)), clinic_id: e.clinic_id, patient_id: e.patient_id, employee_id: emp.id, employee_unit_id: emp.org_unit_id,
@@ -852,7 +836,7 @@ for (const T of ctx.tenants) {
 // ------------------------------------------------------------------ ambulance fleet
 const PLATE = { 'Riau': 'BM', 'Jambi': 'BH', 'Kalimantan Tengah': 'KH', 'Sumatera Utara': 'BK', 'Sumatera Barat': 'BA' };
 for (const T of ctx.tenants) {
-  for (const C of T.clinics.filter(c => c.kind === 'ESTATE')) {
+  for (const C of T.clinics.filter(FULL)) {
     const amb = add('ambulance', { id: randomUUID(), tenant_id: T.tenant.id, clinic_id: C.unit.id, code: `AMB-${C.unit.code.replace('-KLN', '')}`, vehicle_no: `${PLATE[C.province]} ${int(1000, 9999)} ${pick(['AM', 'KA', 'TR', 'ZX'])}`,
       vehicle_type: pick(['EMERGENCY_BASIC', '4WD_RESCUE', 'TRANSPORT']), brand_model: pick(['Toyota Hilux Ambulance', 'Mitsubishi Triton Ambulance', 'Toyota HiAce Ambulance']), year: int(2017, 2025),
       status: weighted([['AVAILABLE', 80], ['MAINTENANCE', 12], ['ON_TRIP', 8]]), current_latitude: C.unit.latitude, current_longitude: C.unit.longitude, location_updated_at: ts(addDays(NOW, -0.1)),
@@ -883,7 +867,7 @@ for (const T of ctx.tenants) {
     for (let m = 0; m < 6; m++) {
       const d = new Date(NOW.getFullYear(), NOW.getMonth() - m, 25);
       if (d > NOW) continue;
-      add('cost_transaction', { id: randomUUID(), tenant_id: T.tenant.id, org_unit_id: C.unit.id, cost_category: 'CLINIC_OPERATIONAL', amount: (C.kind === 'ESTATE' ? int(12, 18) : int(5, 8)) * 1000000, txn_date: isoDate(d), source_type: 'manual', description: 'Biaya operasional bulanan (utilitas, ATK, kebersihan, insentif jaga)' });
+      add('cost_transaction', { id: randomUUID(), tenant_id: T.tenant.id, org_unit_id: C.unit.id, cost_category: 'CLINIC_OPERATIONAL', amount: (C.full ? int(18, 25) : C.kind === 'ESTATE' ? int(10, 15) : int(5, 8)) * 1000000, txn_date: isoDate(d), source_type: 'manual', description: 'Biaya operasional bulanan (utilitas, ATK, kebersihan, insentif jaga)' });
     }
   }
   for (const a of R.clinic_asset.filter(x => x.tenant_id === T.tenant.id && x.purchase_date >= isoDate(addDays(NOW, -DAYS))))
@@ -892,7 +876,7 @@ for (const T of ctx.tenants) {
 
 // ------------------------------------------------------------------ appointments & inpatient stays
 for (const T of ctx.tenants) {
-  for (let i = 0; i < (T.code === 'SNG' ? 240 : 160); i++) {
+  for (let i = 0; i < 260; i++) {
     const p = pick(T.patients); const C = p._clinic; const off = int(-60, 21); const d = atTime(isoDate(addDays(NOW, off)), int(8, 14), pick([0, 15, 30, 45]));
     const status = off > 0 ? pick(['BOOKED', 'CONFIRMED']) : off === 0 ? pick(['CONFIRMED', 'CHECKED_IN']) : weighted([['COMPLETED', 80], ['NO_SHOW', 12], ['CANCELLED', 8]]);
     add('appointment', { id: randomUUID(), tenant_id: T.tenant.id, clinic_id: C.unit.id, patient_id: p.id, staff_id: pick(C.doctors).id, scheduled_at: ts(d), duration_min: 15,
@@ -900,7 +884,7 @@ for (const T of ctx.tenants) {
       status, cancel_reason: status === 'CANCELLED' ? 'Pasien dinas ke luar kebun' : null, created_at: ts(addDays(d, -int(1, 7))) });
   }
   // a few current inpatients for the clinic dashboard
-  for (const e of T.encounters.filter(x => x._daysAgo <= 2 && x._clinic.kind === 'ESTATE' && ['A90', 'B54', 'A09'].includes(x._dx)).slice(0, 6)) {
+  for (const e of T.encounters.filter(x => x._daysAgo <= 2 && FULL(x._clinic) && ['A90', 'B54', 'A09'].includes(x._dx)).slice(0, 6)) {
     const bed = e._clinic.beds.find(b => b.status === 'AVAILABLE'); if (!bed) continue;
     bed.status = 'OCCUPIED';
     add('inpatient_stay', { id: randomUUID(), tenant_id: T.tenant.id, clinic_id: e.clinic_id, encounter_id: e.id, patient_id: e.patient_id, bed_id: bed.id, admitted_at: e.started_at, status: 'ADMITTED' });
@@ -997,4 +981,4 @@ await client.end();
 console.log('\nSeed complete in', ((Date.now() - started) / 1000).toFixed(1), 's');
 console.table(summary.rows[0]);
 console.log(`\nDemo login password for all ${DEMO_USERS.length} demo users: ${DEMO_PASSWORD}`);
-console.log('Examples:', DEMO_USERS.filter(u => /superadmin|corporate|meddirector|hrmanager.snl|estate.snl-e01|dr.snl-e01-kln|apt.snl-e01|nurse1.snl-e01/.test(u.username)).map(u => u.username).join(', '));
+console.log('Examples:', DEMO_USERS.filter(u => /superadmin|corporate|meddirector|hrmanager.bcpj|estate.bcpj-ra|dr.bcpj-ra-kln|apt.bcpj-ra|nurse1.bcpj-ra|dr.bcpj-central/.test(u.username)).map(u => u.username).join(', '));

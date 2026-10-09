@@ -10,8 +10,8 @@ let medicine: { medicine_id: string; qty_usable: number };
 let patientId: string; let encounterId: string;
 
 before(async () => {
-  clinic01 = await unitId('SNL-E01-KLN'); clinic02 = await unitId('SNL-E02-KLN'); e01 = await unitId('SNL-E01');
-  // an employee of Kebun Sei Rokan who is not already in today's queue and has no drug allergy on file
+  clinic01 = await unitId('BCPJ-RA-KLN'); clinic02 = await unitId('BCPJ-RB-KLN'); e01 = await unitId('BCPJ-RA');
+  // an employee of Rayon A who is not already in today's queue and has no drug allergy on file
   const emp = await one(`SELECT e.id FROM employee e JOIN org_unit u ON u.id = e.org_unit_id
                           WHERE u.path <@ (SELECT path FROM org_unit WHERE id = $1) AND e.employment_status = 'ACTIVE' AND e.deleted_at IS NULL
                             AND NOT EXISTS (SELECT 1 FROM patient p JOIN queue_ticket t ON t.patient_id = p.id WHERE p.employee_id = e.id AND p.patient_type = 'EMPLOYEE'
@@ -24,9 +24,9 @@ before(async () => {
 });
 
 test('end-to-end visit: registration → triage → doctor → sign → pharmacy → complete', async () => {
-  const nurse = await login('sng.nurse1.snl-e01-kln');
-  const doctor = await login('sng.dr.snl-e01-kln');
-  const pharmacist = await login('sng.apt.snl-e01-kln');
+  const nurse = await login('kas.nurse1.bcpj-ra-kln');
+  const doctor = await login('kas.dr.bcpj-ra-kln');
+  const pharmacist = await login('kas.apt.bcpj-ra-kln');
 
   const reg = await nurse.post('/queue/register', { clinicId: clinic01, kind: 'EMPLOYEE', refId: employeeId, complaint: 'demam dan batuk 2 hari' });
   assert.equal(reg.status, 200, JSON.stringify(reg.body));
@@ -88,7 +88,7 @@ test('end-to-end visit: registration → triage → doctor → sign → pharmacy
 });
 
 test('HR never sees the clinical record or the confidential note', async () => {
-  const hr = await login('sng.hrmanager.snl');
+  const hr = await login('kas.hrmanager.bcpj');
   const r = await hr.get(`/emr/encounters/${encounterId}`);
   assert.ok([403, 404].includes(r.status));
   assert.ok(!JSON.stringify(r.body).includes('catatan rahasia'));
@@ -96,7 +96,7 @@ test('HR never sees the clinical record or the confidential note', async () => {
 });
 
 test('break-glass: another clinic needs a logged emergency grant to read the history', async () => {
-  const dr2 = await login('sng.dr.snl-e02-kln');
+  const dr2 = await login('kas.dr.bcpj-rb-kln');
   const before = await dr2.get(`/emr/patients/${patientId}/timeline`);
   const visible = before.status === 200 ? before.body.visits.length : 0;
   assert.equal(visible, 0, 'no care relationship → no visits');
@@ -106,16 +106,16 @@ test('break-glass: another clinic needs a logged emergency grant to read the his
   const afterG = await dr2.get(`/emr/patients/${patientId}/timeline`);
   assert.equal(afterG.status, 200);
   assert.ok(afterG.body.visits.length >= 1, 'history visible during the grant');
-  const audit = await one(`SELECT count(*)::int AS n FROM audit.audit_log l JOIN app_user u ON u.id = l.user_id WHERE u.username = 'sng.dr.snl-e02-kln' AND l.action = 'BREAK_GLASS' AND l.occurred_at > now() - interval '1 minute'`);
+  const audit = await one(`SELECT count(*)::int AS n FROM audit.audit_log l JOIN app_user u ON u.id = l.user_id WHERE u.username = 'kas.dr.bcpj-rb-kln' AND l.action = 'BREAK_GLASS' AND l.occurred_at > now() - interval '1 minute'`);
   assert.ok(audit.n >= 1, 'the grant is audited');
-  const md = await one(`SELECT count(*)::int AS n FROM notification n JOIN app_user u ON u.id = n.recipient_id WHERE u.username = 'sng.meddirector' AND n.created_at > now() - interval '1 minute'`);
+  const md = await one(`SELECT count(*)::int AS n FROM notification n JOIN app_user u ON u.id = n.recipient_id WHERE u.username = 'kas.meddirector' AND n.created_at > now() - interval '1 minute'`);
   assert.ok(md.n >= 1, 'the medical director is notified for review');
 });
 
 test('inter-clinic transfer: four-eyes approval, ship and receive move stock', async () => {
-  const admin = await login('sng.superadmin');      // can both request and approve → exercises four-eyes
-  const apt1 = await login('sng.apt.snl-e01-kln');  // source clinic pharmacist
-  const apt2 = await login('sng.apt.snl-e02-kln');  // receiving clinic pharmacist
+  const admin = await login('kas.superadmin');      // can both request and approve → exercises four-eyes
+  const apt1 = await login('kas.apt.bcpj-ra-kln');  // source clinic pharmacist
+  const apt2 = await login('kas.apt.bcpj-rb-kln');  // receiving clinic pharmacist
   const qty = 5;
   const stock = async (u: string) => (await one('SELECT coalesce(sum(qty_on_hand),0)::float AS q FROM inventory_stock WHERE org_unit_id = $1 AND medicine_id = $2', [u, medicine.medicine_id])).q;
 
@@ -140,9 +140,9 @@ test('inter-clinic transfer: four-eyes approval, ship and receive move stock', a
 });
 
 test('accident workflow: serious cases need investigation and management approval', async () => {
-  const hse = await login('sng.hseofficer.snl-e01');
-  const em = await login('sng.estate.snl-e01');
-  const div = await unitId('SNL-E01-DIV1');
+  const hse = await login('kas.hseofficer.bcpj-ra');
+  const em = await login('kas.estate.bcpj-ra');
+  const div = await unitId('BCPJ-RA-DIV1');
   const c = await hse.post('/r/accidents', {
     org_unit_id: div, employee_id: employeeId, victim_name: 'Korban Uji', occurred_at: new Date(Date.now() - 3600_000).toISOString().slice(0, 16),
     location_detail: 'Blok C12', activity: 'HARVESTING', incident_type: 'INJURY', severity: 'SERIOUS', immediate_cause: 'Terkena dodos saat panen',

@@ -11,7 +11,7 @@ fi
 banner() {
   printf '\n\033[1;32m%s\033[0m\n' "════════════════════════════════════════════════════════════"
   printf '\033[1;32m  Palmora Health siap. Buka:  %s\033[0m\n' "$URL"
-  printf '\033[1;32m  Login demo:       sng.superadmin  /  Demo@12345\033[0m\n'
+  printf '\033[1;32m  Login demo:       kas.superadmin  /  Demo@12345\033[0m\n'
   printf '\033[1;32m%s\033[0m\n\n' "════════════════════════════════════════════════════════════"
 }
 

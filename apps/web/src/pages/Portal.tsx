@@ -29,7 +29,7 @@ function QrCard({ patient }: { patient: any }) {
 
 function BookModal({ data, onClose }: { data: any; onClose: () => void }) {
   const qc = useQueryClient(); const toast = useToast();
-  const [v, setV] = useState({ patientId: data.patients[0]?.id ?? '', clinicId: data.patients[0] ? data.clinics.find((c: any) => c.name === data.patients[0].clinic)?.id ?? '' : '', date: shiftDate(todayISO(), 1), time: '08:00', reason: '' });
+  const [v, setV] = useState({ patientId: data.patients[0]?.id ?? '', clinicId: data.patients[0]?.clinic_id ?? '', date: shiftDate(todayISO(), 1), time: '08:00', reason: '' });
   const [err, setErr] = useState<any>(null); const [busy, setBusy] = useState(false);
   const errs: string[] = [];
   if (!v.patientId) errs.push('Pilih pasien');

@@ -186,6 +186,17 @@ Ini memerlukan sekitar 1 menit. Browser akan terbuka otomatis setelah selesai.\"
   kill $NOTE 2>/dev/null
   [ $rc -eq 0 ] || fail "Gagal menyiapkan data demo."
   date > "$SUP/.seeded"
+  echo "$DEMOVER" > "$SUP/.demo-version"
+}
+# demo data generations: 1 = Sawit Nusantara / Andalas (≤ 1.1.0), 2 = Kalimantan Agro Sukses Group
+DEMOVER=2
+offer_new_demo() {
+  [ -f "$SUP/.seeded" ] || return 0
+  [ "$(cat "$SUP/.demo-version" 2>/dev/null || echo 1)" = "$DEMOVER" ] && return 0
+  ans=$(dialog "Versi ini memakai data demo baru: Kalimantan Agro Sukses Group (PT Borneo Citra Persada Jaya dan PT Borneo Citra Persada Abadi, masing-masing Klinik Central dan Klinik Rayon A–F).
+
+Ganti data demo sekarang? Semua data di Palmora Health pada Mac ini akan dihapus dan diganti." '"Nanti saja", "Ganti data demo"' "Ganti data demo")
+  if [ "$ans" = "Ganti data demo" ]; then seed_db; else echo "$DEMOVER" > "$SUP/.demo-version"; fi
 }
 
 start_api() {
@@ -243,6 +254,7 @@ else
   ensure_runtime
   start_pg
   [ -f "$SUP/.seeded" ] || seed_db
+  offer_new_demo
   start_api
 fi
 open "$URL"
@@ -252,7 +264,7 @@ while true; do
   choice=$(dialog "Palmora Health sedang berjalan di:
 $URL
 
-Login demo: sng.superadmin  ·  password Demo@12345
+Login demo: kas.superadmin  ·  password Demo@12345
 (akun demo lain ada di file \"Baca Dulu\")
 
 Biarkan jendela ini terbuka selama memakai Palmora Health. Pilih \"Hentikan\" untuk mematikan server." \

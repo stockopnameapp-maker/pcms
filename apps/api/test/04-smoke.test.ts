@@ -6,8 +6,8 @@ import { close, login } from './helpers.js';
 
 after(close);
 
-const USERS = ['sng.superadmin', 'sng.corporate', 'sng.meddirector', 'sng.estate.snl-e01', 'sng.dr.snl-e01-kln', 'sng.nurse1.snl-e01-kln',
-  'sng.apt.snl-e01-kln', 'sng.hrmanager.snl', 'sng.hseofficer.snl-e01', 'sng.warehouse', 'sng.employee'];
+const USERS = ['kas.superadmin', 'kas.corporate', 'kas.meddirector', 'kas.estate.bcpj-ra', 'kas.dr.bcpj-ra-kln', 'kas.nurse1.bcpj-ra-kln',
+  'kas.apt.bcpj-ra-kln', 'kas.hrmanager.bcpj', 'kas.hseofficer.bcpj-ra', 'kas.warehouse', 'kas.employee'];
 
 for (const username of USERS) {
   test(`smoke: ${username}`, async () => {

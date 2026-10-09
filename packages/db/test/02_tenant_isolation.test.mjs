@@ -1,6 +1,7 @@
 import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { asUser, owner, tenantTables, appPool, closeAll } from './helpers.mjs';
+// the second Group (ZZT) is a throw-away fixture created by test/run.mjs (see foreign-tenant.mjs)
 
 after(closeAll);
 
@@ -23,7 +24,7 @@ test('without a security context every tenant table returns zero rows (fail clos
 });
 
 test('a forged session variable (no valid signature) is ignored', async () => {
-  const [{ id, tenant_id }] = await owner(`SELECT id, tenant_id FROM app_user WHERE username = 'sng.superadmin'`);
+  const [{ id, tenant_id }] = await owner(`SELECT id, tenant_id FROM app_user WHERE username = 'kas.superadmin'`);
   await asUser(null, async db => {
     await db.q(`SELECT set_config('app.user_id', $1, true), set_config('app.tenant_id', $2, true), set_config('app.ctx_sig', 'deadbeef', true)`, [id, tenant_id]);
     assert.equal(await db.val('SELECT app.current_user_id()'), null);
@@ -33,7 +34,7 @@ test('a forged session variable (no valid signature) is ignored', async () => {
 });
 
 test('the security context cannot be set for an inactive user', async () => {
-  const [{ id }] = await owner(`SELECT id FROM app_user WHERE username = 'aag.corporate'`);
+  const [{ id }] = await owner(`SELECT id FROM app_user WHERE username = 'zzt.corporate'`);
   await ownerPoolTx(async c => {
     await c.query(`UPDATE app_user SET status = 'DISABLED' WHERE id = $1`, [id]);
   }, async () => {
@@ -45,7 +46,7 @@ test('the security context cannot be set for an inactive user', async () => {
   });
 });
 
-for (const username of ['sng.superadmin', 'sng.meddirector', 'aag.superadmin', 'aag.meddirector']) {
+for (const username of ['kas.superadmin', 'kas.meddirector', 'zzt.superadmin', 'zzt.meddirector']) {
   test(`${username} never sees another Group's rows in any table`, async () => {
     const tables = await readableTables();
     await asUser(username, async db => {
@@ -62,31 +63,31 @@ for (const username of ['sng.superadmin', 'sng.meddirector', 'aag.superadmin', '
 }
 
 test('group-wide roles see their whole Group (scope inheritance through the hierarchy)', async () => {
-  const [{ n: expected }] = await owner(`SELECT count(*)::int AS n FROM employee e JOIN tenant t ON t.id = e.tenant_id WHERE t.code = 'SNG'`);
-  await asUser('sng.superadmin', async db => {
+  const [{ n: expected }] = await owner(`SELECT count(*)::int AS n FROM employee e JOIN tenant t ON t.id = e.tenant_id WHERE t.code = 'KAS'`);
+  await asUser('kas.superadmin', async db => {
     assert.equal(await db.val('SELECT count(*)::int FROM employee'), expected);
   });
 });
 
 test('writing into another tenant is rejected by the database', async () => {
-  const [aag] = await owner(`SELECT t.id AS tenant_id, g.id AS group_id FROM tenant t JOIN org_unit g ON g.tenant_id = t.id AND g.unit_type = 'GROUP' WHERE t.code = 'AAG'`);
-  await asUser('sng.superadmin', async db => {
+  const [foreign] = await owner(`SELECT t.id AS tenant_id, g.id AS group_id FROM tenant t JOIN org_unit g ON g.tenant_id = t.id AND g.unit_type = 'GROUP' WHERE t.code = 'ZZT'`);
+  await asUser('kas.superadmin', async db => {
     await db.rejects(`INSERT INTO org_unit (tenant_id, parent_id, unit_type, code, name) VALUES ($1, $2, 'COMPANY', 'HACK-PT', 'Hacked PT')`,
-      [aag.tenant_id, aag.group_id], /row-level security|another tenant|not found/);
+      [foreign.tenant_id, foreign.group_id], /row-level security|another tenant|not found/);
     // omitting tenant_id: the trigger fills the caller's tenant, but the foreign parent is still refused
     await db.rejects(`INSERT INTO org_unit (parent_id, unit_type, code, name) VALUES ($1, 'COMPANY', 'HACK-PT2', 'Hacked PT')`,
-      [aag.group_id], /row-level security|another tenant|not found/);
+      [foreign.group_id], /row-level security|another tenant|not found/);
     // updating a foreign row silently affects nothing
-    const res = await db.q(`UPDATE org_unit SET name = 'pwned' WHERE id = $1 RETURNING id`, [aag.group_id]);
+    const res = await db.q(`UPDATE org_unit SET name = 'pwned' WHERE id = $1 RETURNING id`, [foreign.group_id]);
     assert.equal(res.length, 0);
   });
 });
 
 test('tenant_id of an existing row is immutable', async () => {
-  const [aag] = await owner(`SELECT id FROM tenant WHERE code = 'AAG'`);
-  await asUser('sng.superadmin', async db => {
+  const [foreign] = await owner(`SELECT id FROM tenant WHERE code = 'ZZT'`);
+  await asUser('kas.superadmin', async db => {
     const emp = await db.one('SELECT id FROM employee LIMIT 1');
-    await db.rejects('UPDATE employee SET tenant_id = $1 WHERE id = $2', [aag.id, emp.id], /immutable|row-level security/);
+    await db.rejects('UPDATE employee SET tenant_id = $1 WHERE id = $2', [foreign.id, emp.id], /immutable|row-level security/);
   });
 });
 
@@ -100,7 +101,7 @@ async function ownerPoolTx(setup, check) {
     await c.query('COMMIT');
     await check();
   } finally {
-    await c.query(`UPDATE app_user SET status = 'ACTIVE' WHERE username = 'aag.corporate'`);
+    await c.query(`UPDATE app_user SET status = 'ACTIVE' WHERE username = 'zzt.corporate'`);
     c.release();
   }
 }

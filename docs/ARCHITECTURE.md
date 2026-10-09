@@ -152,7 +152,7 @@ export async function withContext<T>(ctx: RequestContext, fn: (tx: Tx) => Promis
 - **Validasi di database**: CHECK untuk enum/format (NIK 16 digit, BPJS 13 digit, plat nomor, rentang tanda vital, konsistensi status↔tanggal), FK, unique parsial. API menambah validasi Zod untuk pesan yang ramah.
 - **Soft delete**: menghapus = mengisi `deleted_at`, butuh permission `DELETE` (dicek trigger). Tabel klinis & legal diberi trigger `_no_delete` yang menolak `DELETE` fisik — bahkan untuk owner database.
 - **Rekam medis bertanda tangan bersifat final**: koreksi lewat `encounter_addendum`.
-- **Penomoran dokumen** bebas celah & aman konkuren: `app.next_document_no('ACC','SNL','YYYY')` → `ACC-SNL-2026-000123`.
+- **Penomoran dokumen** bebas celah & aman konkuren: `app.next_document_no('ACC','BCPJ','YYYY')` → `ACC-BCPJ-2026-000123`.
 
 ---
 
@@ -410,7 +410,7 @@ Enterprise–medis–perkebunan: **Deep green** `#0F3D2E` (sidebar, header), pri
 ### 9.2 Struktur layar
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
-│ [Logo Palmora]  [Scope: SNG ▸ PT SNL ▸ Kebun Sei Rokan ▾]  [🔍 Cari...]  🔔 👤 │
+│ [Logo Palmora]  [Scope: KAS ▸ PT BCPJ ▸ Rayon A ▾]       [🔍 Cari...]  🔔 👤 │
 ├──────────────┬───────────────────────────────────────────────────────────┤
 │ Dashboard    │  Breadcrumb · Filter: Periode · Unit                      │
 │ Pelayanan    │  ┌KPI┐ ┌KPI┐ ┌KPI┐ ┌KPI┐ ┌KPI┐                            │
@@ -470,7 +470,7 @@ Enterprise–medis–perkebunan: **Deep green** `#0F3D2E` (sidebar, header), pri
 npm install                                  # root monorepo
 cp packages/db/.env.example packages/db/.env # kredensial PostgreSQL 16
 cp apps/api/.env.example apps/api/.env       # isi JWT_SECRET & FIELD_ENCRYPTION_KEY (openssl rand -base64 32)
-npm run db:reset                             # role + database, 18 migrasi, seed demo (±25 dtk)
+npm run db:reset                             # role + database, 19 migrasi, seed demo (±25 dtk)
 npm run build                                # build SPA ke apps/web/dist
 npm start                                    # API + web di http://localhost:8080
 # pengembangan: npm run dev:api  &  npm run dev:web   (Vite di :5173, proxy /api → :8080)
@@ -482,21 +482,31 @@ dokter pada data demo juga tersimpan terenkripsi.
 ### 11.2 Data demo (deterministik)
 | Entitas | Jumlah | Entitas | Jumlah |
 |---|---|---|---|
-| Group | 2 (Sawit Nusantara Group, Andalas Agro Group) | Dokter / Perawat | 30 / 50 (+15 apoteker, 10 driver) |
-| PT | 5 | Obat (katalog per Group) | 200 |
-| Region / Estate / Divisi | 4 / 10 / 20 | Rumah sakit | 20 |
-| Mill | 5 | Encounter (6 bulan) | ±9.500 dengan diagnosis, resep, tanda vital |
-| Klinik | 15 (10 estate, 5 mill) + 2 gudang pusat | Kecelakaan / Rujukan | 150 / 300 |
+| Group | 1 (Kalimantan Agro Sukses Group) | Dokter / Perawat | 28 / 56 (+14 apoteker, 14 driver) |
+| PT | 2 (PT Borneo Citra Persada Jaya, PT Borneo Citra Persada Abadi) | Obat (katalog) | 200 |
+| Rayon (kebun) / Divisi | 12 (Rayon A–F per PT) / 24 | Rumah sakit rujukan | 11 |
+| PKS | 2 (satu per PT, dilayani Klinik Central) | Encounter (6 bulan) | ±8.600 dengan diagnosis, resep, tanda vital |
+| Klinik | 14 (per PT: Klinik Central + Klinik Rayon A–F) + 1 gudang pusat | Kecelakaan / Rujukan | ±105 / 200 |
 | Karyawan | 1.000 | MCU / Surat sakit | ±1.150 / ±430 |
-| Pasien | 2.000 | Pengguna demo | 182 (semua role) |
+| Pasien | 2.000 | Pengguna demo | 178 (semua role) |
+
+Struktur: **Kalimantan Agro Sukses Group** → PT Borneo Citra Persada Jaya (BCPJ) dan PT Borneo Citra Persada Abadi (BCPA) →
+masing-masing **Klinik Central** (langsung di bawah PT; melayani PKS dan kantor PT, punya lab & rawat inap) serta **Rayon A–F**
+(kebun, masing-masing 2 divisi dan satu **Klinik Rayon**). Kode unit: `BCPJ-RA` (Rayon A), `BCPJ-RA-KLN` (Klinik Rayon A),
+`BCPJ-CENTRAL` (Klinik Central), `BCPJ-PKS`. Lokasi (Kotawaringin Timur / Seruyan, Kalimantan Tengah) adalah contoh dan dapat
+diubah di menu Struktur Organisasi.
 
 Hari ini selalu berisi antrian yang sedang berjalan dan order lab terbuka, sehingga papan antrian dan worklist lab langsung
-dapat dicoba. Data mengandung pola untuk early warning (lonjakan ISPA di Kebun Sei Rokan, dermatitis pada sprayer, batch
+dapat dicoba. Data mengandung pola untuk early warning (lonjakan ISPA di Rayon A PT BCPJ, dermatitis pada sprayer, batch
 mendekati kedaluwarsa, stok di bawah minimum, MCU terlambat) — alert dihitung dari data, bukan hardcode.
 
-Login demo (password `Demo@12345`): `sng.superadmin`, `sng.corporate`, `sng.meddirector`, `sng.hrmanager.snl`,
-`sng.estate.snl-e01`, `sng.dr.snl-e01-kln` (dokter + kepala klinik), `sng.nurse1.snl-e01-kln`, `sng.apt.snl-e01-kln`,
-`sng.hseofficer.snl-e01`, `sng.warehouse`, `sng.employee` (portal), `aag.superadmin` (tenant kedua).
+Login demo (password `Demo@12345`): `kas.superadmin`, `kas.corporate`, `kas.meddirector`, `kas.hrmanager.bcpj`,
+`kas.estate.bcpj-ra`, `kas.dr.bcpj-ra-kln` (dokter + kepala Klinik Rayon A), `kas.dr.bcpj-central` (Klinik Central),
+`kas.nurse1.bcpj-ra-kln`, `kas.apt.bcpj-ra-kln`, `kas.hseofficer.bcpj-ra`, `kas.warehouse`, `kas.employee` (portal).
+Pola nama: `kas.<peran>.<kode unit>`, mis. `kas.dr.bcpa-rf-kln` = dokter Klinik Rayon F PT BCPA.
+
+Uji isolasi antar-Group memakai Group kedua sementara (`ZZT`) yang dibuat oleh test runner sebelum test dan dihapus
+sesudahnya (`packages/db/test/foreign-tenant.mjs`), sehingga database demo hanya berisi satu Group.
 
 ### 11.3 Yang dibuktikan oleh test
 **Database (43, sebagai `pcms_app`)** — isolasi tenant di semua tabel, tanpa konteks = 0 baris, konteks palsu diabaikan,

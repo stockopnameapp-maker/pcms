@@ -8,7 +8,7 @@
     "dev": "tsx watch src/index.ts",
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
-    "test": "node --import tsx --test --test-concurrency=1 test/*.test.ts"
+    "test": "node ../../packages/db/test/run.mjs --import tsx --test --test-concurrency=1 test/01-auth.test.ts test/02-access.test.ts test/03-workflow.test.ts test/04-smoke.test.ts test/05-operations.test.ts"
   },
   "devDependencies": {
     "@types/node": "^26.6.4",

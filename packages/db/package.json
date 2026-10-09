@@ -8,7 +8,7 @@
     "reset": "node scripts/reset.mjs",
     "migrate": "node scripts/migrate.mjs",
     "seed": "node seed/seed.mjs",
-    "test": "node --test --test-concurrency=1 test/*.test.mjs"
+    "test": "node test/run.mjs --test --test-concurrency=1 test/01_schema.test.mjs test/02_tenant_isolation.test.mjs test/03_scope_rbac.test.mjs test/04_integrity_audit.test.mjs"
   },
   "dependencies": {
     "pg": "^8.13.0"

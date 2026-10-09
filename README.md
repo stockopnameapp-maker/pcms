@@ -23,7 +23,7 @@ Open this repository in **GitHub Codespaces**: green **Code** button → **Codes
 The first start takes about 3–5 minutes (install, database, demo data). A terminal then shows
 **"Palmora Health siap. Buka: https://…app.github.dev"** — click that link (or open the **Ports** tab → globe icon next to port **8080**).
 If nothing appears, open a terminal (Ctrl+`) and run `bash .devcontainer/start.sh`.
-Log in as `sng.superadmin` / `Demo@12345`. Stop the codespace when you're done (free accounts include monthly hours).
+Log in as `kas.superadmin` / `Demo@12345`. Stop the codespace when you're done (free accounts include monthly hours).
 
 ## Quick start
 
@@ -40,7 +40,7 @@ cp apps/api/.env.example    apps/api/.env        # DATABASE_URL / DATABASE_OWNER
 #   JWT_SECRET=$(openssl rand -base64 48)
 #   FIELD_ENCRYPTION_KEY=$(openssl rand -base64 32)   ← set before seeding
 
-npm run db:reset      # create roles + database, run 18 migrations, load demo data (~25 s)
+npm run db:reset      # create roles + database, run 19 migrations, load demo data (~25 s)
 npm run build         # build the web app into apps/web/dist
 npm start             # API + web on http://localhost:8080
 ```
@@ -55,26 +55,30 @@ Type checks: `npm run typecheck`.
 
 ## Demo users
 
-Password for all 182 demo users: `Demo@12345`
+Demo organisation: **Kalimantan Agro Sukses Group** → PT Borneo Citra Persada Jaya (BCPJ) and PT Borneo Citra Persada Abadi (BCPA), each with
+Klinik Central (also serving the PKS) and Klinik Rayon A–F. Password for all 178 demo users: `Demo@12345`
 
 | User | Role | Lands on |
 |---|---|---|
-| `sng.corporate` | Corporate management | Group dashboard, finance, reports |
-| `sng.meddirector` | Medical Director | Health intelligence, alerts, MCU, break-glass review |
-| `sng.estate.snl-e01` | Estate manager (Kebun Sei Rokan) | Estate dashboard, accident approvals |
-| `sng.dr.snl-e01-kln` | Doctor + clinic manager | Queue, EMR, lab, approvals |
-| `sng.nurse1.snl-e01-kln` | Nurse | Registration & triage |
-| `sng.apt.snl-e01-kln` | Pharmacist | Prescriptions, stock, transfers |
-| `sng.hrmanager.snl` | HR manager | Employees, sick-leave letters (no diagnoses) |
-| `sng.hseofficer.snl-e01` | HSE officer | Accidents & investigations |
-| `sng.employee` | Employee | Self-service portal, QR card, appointments |
-| `sng.superadmin` / `aag.superadmin` | Super admin of each group | Users, roles, audit — and proof that groups never see each other |
+| `kas.corporate` | Corporate management | Group dashboard, finance, reports |
+| `kas.meddirector` | Medical Director | Health intelligence, alerts, MCU, break-glass review |
+| `kas.estate.bcpj-ra` | Estate manager (Rayon A, PT BCPJ) | Estate dashboard, accident approvals |
+| `kas.dr.bcpj-ra-kln` | Doctor + clinic manager, Klinik Rayon A | Queue, EMR, lab, approvals |
+| `kas.dr.bcpj-central` | Doctor + clinic manager, Klinik Central | Same, for the PKS and head office |
+| `kas.nurse1.bcpj-ra-kln` | Nurse | Registration & triage |
+| `kas.apt.bcpj-ra-kln` | Pharmacist | Prescriptions, stock, transfers |
+| `kas.hrmanager.bcpj` | HR manager | Employees, sick-leave letters (no diagnoses) |
+| `kas.hseofficer.bcpj-ra` | HSE officer | Accidents & investigations |
+| `kas.employee` | Employee | Self-service portal, QR card, appointments |
+| `kas.superadmin` | Super admin | Users, roles, organisation structure, audit |
+
+Tenant isolation is still tested against a second Group that the test runner creates temporarily and removes afterwards.
 
 ## Repository layout
 
 ```
 docs/ARCHITECTURE.md   blueprint, decisions, test evidence, production notes (Bahasa Indonesia)
-packages/db/           schema, RLS policies, roles, migrations 0001–0018, seed, DB tests
+packages/db/           schema, RLS policies, roles, migrations 0001–0019, seed, DB tests
 apps/api/              Fastify API (src/core, src/modules, src/jobs) + API tests
 apps/web/              React SPA (src/lib, src/components, src/pages)
 ```

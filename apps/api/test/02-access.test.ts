@@ -4,21 +4,21 @@ import { close, login, one, q, unitId } from './helpers.js';
 
 after(close);
 let e01: string, e02: string, grp: string;
-before(async () => { e01 = await unitId('SNL-E01'); e02 = await unitId('SNL-E02'); grp = await unitId('SNG-GRP'); });
+before(async () => { e01 = await unitId('BCPJ-RA'); e02 = await unitId('BCPJ-RB'); grp = await unitId('KAS-GRP'); });
 
 test('module permissions are enforced by the API, not just hidden in the menu', async () => {
-  const hr = await login('sng.hrmanager.snl');
+  const hr = await login('kas.hrmanager.bcpj');
   assert.equal((await hr.get('/r/encounters')).status, 403, 'HR cannot list medical records');
   assert.equal((await hr.get('/r/prescriptions')).status, 403);
   assert.equal((await hr.get('/lab/worklist')).status, 403);
-  const corp = await login('sng.corporate');
+  const corp = await login('kas.corporate');
   assert.equal((await corp.get('/r/encounters')).status, 403, 'corporate management sees aggregates only');
-  const enc = await one(`SELECT e.id FROM encounter e JOIN org_unit c ON c.id = e.clinic_id WHERE c.code = 'SNL-E01-KLN' AND e.status = 'SIGNED' LIMIT 1`);
+  const enc = await one(`SELECT e.id FROM encounter e JOIN org_unit c ON c.id = e.clinic_id WHERE c.code = 'BCPJ-RA-KLN' AND e.status = 'SIGNED' LIMIT 1`);
   assert.ok([403, 404].includes((await corp.get(`/emr/encounters/${enc.id}`)).status));
 });
 
 test('HR sees sick-leave administration without diagnosis or clinical notes', async () => {
-  const hr = await login('sng.hrmanager.snl');
+  const hr = await login('kas.hrmanager.bcpj');
   const r = await hr.get('/r/sick-leaves', { pageSize: 20 });
   assert.equal(r.status, 200);
   assert.ok(r.body.data.length > 0);
@@ -31,26 +31,26 @@ test('HR sees sick-leave administration without diagnosis or clinical notes', as
 });
 
 test('tenant isolation: another group cannot read or address this group\'s data', async () => {
-  const other = await login('aag.corporate');
-  const emp = await one(`SELECT e.id, e.employee_no FROM employee e JOIN tenant t ON t.id = e.tenant_id WHERE t.code = 'SNG' LIMIT 1`);
+  const other = await login('zzt.corporate');
+  const emp = await one(`SELECT e.id, e.employee_no FROM employee e JOIN tenant t ON t.id = e.tenant_id WHERE t.code = 'KAS' LIMIT 1`);
   const list = await other.get('/r/employees', { q: emp.employee_no });
   assert.equal(list.status, 200);
   assert.equal(list.body.total, 0);
   assert.equal((await other.get(`/r/employees/${emp.id}`)).status, 404);
   assert.equal((await other.get('/dashboard/summary', { unitId: grp })).status, 403);
-  const units = await other.get('/lookup/org_unit', { q: 'Sei Rokan' });
+  const units = await other.get('/lookup/org_unit', { q: 'Rayon' });
   assert.equal(units.body.data.length, 0);
 });
 
 test('org-scope: an estate manager cannot open another estate\'s dashboard', async () => {
-  const em = await login('sng.estate.snl-e01');
+  const em = await login('kas.estate.bcpj-ra');
   assert.equal((await em.get('/dashboard/summary', { unitId: e01 })).status, 200);
   assert.equal((await em.get('/dashboard/summary', { unitId: e02 })).status, 403);
   assert.equal((await em.get('/finance/costs', { unitId: e02 })).status, 403);
 });
 
 test('small-cell suppression hides rare diagnoses from non-clinical viewers', async () => {
-  const em = await login('sng.estate.snl-e01');
+  const em = await login('kas.estate.bcpj-ra');
   const r = await em.get('/dashboard/top-diseases', { unitId: e01, limit: 50, from: '2020-01-01' });
   assert.equal(r.status, 200);
   for (const d of r.body.data) assert.ok(d.cases === null ? d.suppressed : Number(d.cases) >= 5, `${d.icd10_code} leaks a count of ${d.cases}`);
@@ -63,19 +63,19 @@ test('small-cell suppression hides rare diagnoses from non-clinical viewers', as
 });
 
 test('global search only returns sections the user may read', async () => {
-  const hr = await login('sng.hrmanager.snl');
+  const hr = await login('kas.hrmanager.bcpj');
   const r = await hr.get('/search', { q: 'ENC' });
   assert.ok(!r.body.data.some((s: any) => s.type === 'encounter'));
-  const doc = await login('sng.dr.snl-e01-kln');
+  const doc = await login('kas.dr.bcpj-ra-kln');
   const d = await doc.get('/search', { q: 'ENC' });
   assert.ok(d.body.data.some((s: any) => s.type === 'encounter'));
 });
 
 test('generic resources validate input and use optimistic locking', async () => {
-  const admin = await login('sng.superadmin');
+  const admin = await login('kas.superadmin');
   const bad = await admin.post('/r/medicines', { name: 'x' });
   assert.equal(bad.status, 400);
-  const sup = await one(`SELECT s.id FROM supplier s JOIN tenant t ON t.id = s.tenant_id WHERE t.code = 'SNG' LIMIT 1`);
+  const sup = await one(`SELECT s.id FROM supplier s JOIN tenant t ON t.id = s.tenant_id WHERE t.code = 'KAS' LIMIT 1`);
   const code = 'TST-' + Date.now().toString(36).toUpperCase();
   const h = await admin.post('/r/hospitals', { code, name: 'RS Uji Integrasi', hospital_type: 'RSUD', city: 'Pekanbaru', is_partner: false });
   assert.equal(h.status, 201, JSON.stringify(h.body));
@@ -91,7 +91,7 @@ test('generic resources validate input and use optimistic locking', async () => 
 });
 
 test('report exports require EXPORT permission and are written to the audit trail', async () => {
-  const corp = await login('sng.corporate');
+  const corp = await login('kas.corporate');
   const list = await corp.get('/reports');
   assert.equal(list.body.data.length, 15);
   const j = await corp.get('/reports/CONSOLIDATED', { unitId: grp });
@@ -105,15 +105,15 @@ test('report exports require EXPORT permission and are written to the audit trai
   assert.equal(p.raw.subarray(0, 4).toString(), '%PDF');
   const c = await corp.get('/reports/CONSOLIDATED', { unitId: grp, format: 'csv' });
   assert.match(c.raw.toString('utf8'), /Unit/);
-  const audit = await q(`SELECT action FROM audit.audit_log l JOIN app_user u ON u.id = l.user_id WHERE u.username = 'sng.corporate'
+  const audit = await q(`SELECT action FROM audit.audit_log l JOIN app_user u ON u.id = l.user_id WHERE u.username = 'kas.corporate'
                           AND l.table_name = 'report' AND l.occurred_at > now() - interval '1 minute'`);
   assert.ok(audit.some((a) => a.action === 'EXPORT') && audit.some((a) => a.action === 'PRINT') && audit.some((a) => a.action === 'VIEW'));
-  const hr = await login('sng.hrmanager.snl');
+  const hr = await login('kas.hrmanager.bcpj');
   assert.equal((await hr.get('/reports/INVENTORY', { unitId: e01 })).status, 403, 'HR cannot run the pharmacy inventory report');
 });
 
 test('portal users only reach their own and their family\'s records', async () => {
-  const emp = await login('sng.employee');
+  const emp = await login('kas.employee');
   const s = await emp.get('/portal/summary');
   assert.equal(s.status, 200);
   const mine = s.body.data.patients.map((p: any) => p.id);
@@ -129,10 +129,10 @@ test('portal users only reach their own and their family\'s records', async () =
 });
 
 test('role administration: system roles are immutable, escalation is blocked', async () => {
-  const admin = await login('sng.superadmin');
+  const admin = await login('kas.superadmin');
   const roles = (await admin.get('/admin/roles')).body.roles;
   const sys = roles.find((r: any) => r.code === 'DOCTOR');
   assert.equal((await admin.put(`/admin/roles/${sys.id}/permissions`, { permissions: [] })).status, 403);
-  const cm = await login('sng.dr.snl-e01-kln');
+  const cm = await login('kas.dr.bcpj-ra-kln');
   assert.equal((await cm.get('/admin/roles')).status, 403);
 });

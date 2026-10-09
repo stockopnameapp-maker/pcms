@@ -4,7 +4,7 @@ set -euo pipefail
 REPO=/home/claude/pcms
 B=/tmp/claude-0/dmg/build
 DL=/tmp/claude-0/dmg/dl
-VERSION=1.1.0
+VERSION=1.2.0
 NODEV=v22.23.3
 PGV=16.14.0-beta.17
 OUT=$B/out

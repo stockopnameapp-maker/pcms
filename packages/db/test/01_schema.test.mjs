@@ -60,9 +60,10 @@ test('UUID primary keys and standard audit columns on business tables', async ()
 });
 
 test('demo data volumes match the specification', async () => {
+  // the isolation fixture (Group ZZT) only exists while tests run; it is excluded here
   const [c] = await owner(`SELECT
-    (SELECT count(*) FROM tenant)::int AS groups,
-    (SELECT count(*) FROM org_unit WHERE unit_type = 'COMPANY')::int AS pts,
+    (SELECT count(*) FROM tenant WHERE code <> 'ZZT')::int AS groups,
+    (SELECT count(*) FROM org_unit WHERE unit_type = 'COMPANY' AND code NOT LIKE 'ZZT-%')::int AS pts,
     (SELECT count(*) FROM org_unit WHERE unit_type = 'ESTATE')::int AS estates,
     (SELECT count(*) FROM org_unit WHERE unit_type = 'DIVISION')::int AS divisions,
     (SELECT count(*) FROM org_unit WHERE unit_type = 'CLINIC')::int AS clinics,
@@ -72,7 +73,7 @@ test('demo data volumes match the specification', async () => {
     (SELECT count(*) FROM medical_staff WHERE staff_type = 'NURSE')::int AS nurses,
     (SELECT count(DISTINCT code) FROM medicine)::int AS medicines,
     (SELECT count(*) FROM hospital)::int AS hospitals`);
-  assert.deepEqual(c, { groups: 2, pts: 5, estates: 10, divisions: 20, clinics: 15, employees: 1000, patients: 2000, doctors: 30, nurses: 50, medicines: 200, hospitals: 20 });
+  assert.deepEqual(c, { groups: 1, pts: 2, estates: 12, divisions: 24, clinics: 14, employees: 1000, patients: 2000, doctors: 28, nurses: 56, medicines: 200, hospitals: 11 });
 });
 
 test('stock on hand equals the sum of all inventory transactions', async () => {

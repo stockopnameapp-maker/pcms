@@ -23,17 +23,19 @@ PEMBUKAAN PERTAMA (perlu internet, sekali saja)
   aplikasi. Pilih "Hentikan Palmora Health" untuk mematikan server.
 
 AKUN DEMO (password semua: Demo@12345)
-  sng.superadmin            Super Admin
-  sng.corporate             Manajemen korporat (dashboard grup)
-  sng.meddirector           Medical Director
-  sng.estate.snl-e01        Estate Manager Kebun Sei Rokan
-  sng.dr.snl-e01-kln        Dokter & kepala klinik
-  sng.nurse1.snl-e01-kln    Perawat (registrasi & triase)
-  sng.apt.snl-e01-kln       Apoteker
-  sng.hrmanager.snl         HR Manager
-  sng.hseofficer.snl-e01    HSE Officer
-  sng.employee              Karyawan (portal pribadi)
-  aag.superadmin            Super Admin grup kedua (data terpisah)
+  kas.superadmin            Super Admin
+  kas.corporate             Manajemen Kalimantan Agro Sukses Group
+  kas.meddirector           Medical Director
+  kas.hrmanager.bcpj        HR Manager PT Borneo Citra Persada Jaya
+  kas.estate.bcpj-ra        Estate Manager Rayon A (PT BCPJ)
+  kas.dr.bcpj-central       Dokter & kepala Klinik Central (PT BCPJ)
+  kas.dr.bcpj-ra-kln        Dokter & kepala Klinik Rayon A (PT BCPJ)
+  kas.nurse1.bcpj-ra-kln    Perawat Klinik Rayon A (registrasi & triase)
+  kas.apt.bcpj-ra-kln       Apoteker Klinik Rayon A
+  kas.hseofficer.bcpj-ra    HSE Officer Rayon A
+  kas.employee              Karyawan (portal pribadi)
+  Pola: kas.<peran>.<unit>, mis. kas.dr.bcpa-rf-kln = dokter Klinik Rayon F
+  PT Borneo Citra Persada Abadi (bcpa).
 
 DATA & LOG
 - Data (database, lampiran, kunci rahasia):
