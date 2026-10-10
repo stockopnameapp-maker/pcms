@@ -25,6 +25,17 @@ The first start takes about 3–5 minutes (install, database, demo data). A term
 If nothing appears, open a terminal (Ctrl+`) and run `bash .devcontainer/start.sh`.
 Log in as `kas.superadmin` / `Demo@12345`. Stop the codespace when you're done (free accounts include monthly hours).
 
+## Install on a VPS
+
+Ubuntu 22.04/24.04 or Debian 12, one command (PostgreSQL, Node.js, service, HTTPS via Caddy, firewall, daily backups):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/stockopnameapp-maker/pcms/main/deploy/install.sh -o install.sh
+sudo DOMAIN=palmora.example.co.id EMAIL=it@example.co.id bash install.sh
+```
+
+Step-by-step guide (Bahasa Indonesia): [`deploy/README.md`](deploy/README.md).
+
 ## Android app (doctors & nurses)
 
 `apps/mobile` is an Android app (Capacitor + React) for clinic staff: queue, registration with QR card scanning,
