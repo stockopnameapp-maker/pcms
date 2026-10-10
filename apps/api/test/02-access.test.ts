@@ -1,6 +1,6 @@
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
-import { close, login, one, q, unitId } from './helpers.js';
+import { close, login, one, q, server, unitId } from './helpers.js';
 
 after(close);
 let e01: string, e02: string, grp: string;
@@ -135,4 +135,14 @@ test('role administration: system roles are immutable, escalation is blocked', a
   assert.equal((await admin.put(`/admin/roles/${sys.id}/permissions`, { permissions: [] })).status, 403);
   const cm = await login('kas.dr.bcpj-ra-kln');
   assert.equal((await cm.get('/admin/roles')).status, 403);
+});
+
+test('the Android app origin may call the API (CORS), other origins may not', async () => {
+  const s = await server();
+  const pre = (origin: string) => s.inject({ method: 'OPTIONS', url: '/api/v1/emr/encounters/x', headers: { origin, 'access-control-request-method': 'PATCH' } });
+  const ok = await pre('https://localhost');
+  assert.equal(ok.headers['access-control-allow-origin'], 'https://localhost');
+  assert.match(String(ok.headers['access-control-allow-methods']), /PATCH/);
+  const evil = await pre('https://evil.example');
+  assert.equal(evil.headers['access-control-allow-origin'], undefined);
 });

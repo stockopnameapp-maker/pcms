@@ -31,7 +31,8 @@ export const config = {
   accessTtl: env('ACCESS_TOKEN_TTL', '15m'),
   refreshDays: Number(env('REFRESH_TOKEN_DAYS', '7')),
   idleMinutes: Number(env('SESSION_IDLE_MINUTES', '30')),
-  corsOrigins: env('CORS_ORIGINS', 'http://localhost:5173').split(',').map(s => s.trim()),
+  // + the Android app's WebView origins (Capacitor), so the Palmora Health mobile app can call the API
+  corsOrigins: [...env('CORS_ORIGINS', 'http://localhost:5173').split(',').map(s => s.trim()), 'https://localhost', 'capacitor://localhost'],
   storageDir: path.resolve(root, env('STORAGE_DIR', './storage')),
   webDist: process.env.WEB_DIST ? path.resolve(process.env.WEB_DIST) : path.resolve(root, '../web/dist'),
   jobsEnabled: env('JOBS_ENABLED', 'true') === 'true',

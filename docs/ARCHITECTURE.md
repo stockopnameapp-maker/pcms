@@ -1,7 +1,7 @@
 # Palmora Health (PCMS — Plantation Clinic Management System)
 ## Blueprint Arsitektur & Implementasi (Phase 1–12)
 
-> Dokumen ini berisi analisis kebutuhan, arsitektur, skema database, ERD, RBAC, strategi tenant isolation, struktur API, struktur proyek, navigasi UI, roadmap, serta status implementasi. Ke-12 phase sudah diimplementasikan dan diuji otomatis (§10–§11). Bagian yang masih berupa rancangan atau batasan yang diketahui ditandai eksplisit (§6.2 dan §11.5).
+> Dokumen ini berisi analisis kebutuhan, arsitektur, skema database, ERD, RBAC, strategi tenant isolation, struktur API, struktur proyek, navigasi UI, roadmap, serta status implementasi. Ke-12 phase sudah diimplementasikan dan diuji otomatis (§10–§11). Bagian yang masih berupa rancangan atau batasan yang diketahui ditandai eksplisit (§6.2 dan §11.6).
 
 ---
 
@@ -46,7 +46,7 @@ Super Admin, Group Admin, Corporate Management, Medical Director, Medical Manage
 ### 1.4 Kebutuhan non-fungsional
 - **Keamanan & privasi:** isolasi tenant di level database, need-to-know untuk data klinis, audit lengkap, tidak ada hard delete rekam medis. Mengacu UU No. 27/2022 (Pelindungan Data Pribadi) dan Permenkes No. 24/2022 (Rekam Medis Elektronik: wajib disimpan, dapat diaudit, kerahasiaan).
 - **Skalabilitas:** puluhan Group, ratusan PT/estate, ribuan klinik, jutaan encounter. Penambahan unit = data, bukan kode.
-- **Ketersediaan di lapangan:** koneksi estate sering buruk → UI ringan & responsif (SPA, aset di-cache permanen); mode offline/PWA belum dibangun (§11.5).
+- **Ketersediaan di lapangan:** koneksi estate sering buruk → UI ringan & responsif (SPA, aset di-cache permanen); mode offline/PWA belum dibangun (§11.6).
 - **Maintainability:** satu bahasa (TypeScript) di backend & frontend, skema dikelola migrasi berversi, aturan keamanan terpusat di database.
 
 ### 1.5 Keputusan desain kunci (dan alasannya)
@@ -378,7 +378,7 @@ pcms/                                   monorepo (npm workspaces)
 ├── docs/ARCHITECTURE.md                dokumen ini
 ├── packages/db/
 │   ├── bootstrap.sql                   role pcms_owner / pcms_app + database
-│   ├── migrations/0001…0019_*.sql      skema, RLS, role, layanan aplikasi, analitik, perbaikan
+│   ├── migrations/0001…0020_*.sql      skema, RLS, role, layanan aplikasi, analitik, perbaikan
 │   ├── seed/                           generator data demo deterministik
 │   ├── scripts/                        migrate (checksum), reset
 │   └── test/                           43 test keamanan & integritas (sebagai pcms_app)
@@ -470,7 +470,7 @@ Enterprise–medis–perkebunan: **Deep green** `#0F3D2E` (sidebar, header), pri
 npm install                                  # root monorepo
 cp packages/db/.env.example packages/db/.env # kredensial PostgreSQL 16
 cp apps/api/.env.example apps/api/.env       # isi JWT_SECRET & FIELD_ENCRYPTION_KEY (openssl rand -base64 32)
-npm run db:reset                             # role + database, 19 migrasi, seed demo (±25 dtk)
+npm run db:reset                             # role + database, 20 migrasi, seed demo (±25 dtk)
 npm run build                                # build SPA ke apps/web/dist
 npm start                                    # API + web di http://localhost:8080
 # pengembangan: npm run dev:api  &  npm run dev:web   (Vite di :5173, proxy /api → :8080)
@@ -549,7 +549,14 @@ organisasi, setup MFA, booking portal — tanpa error JavaScript maupun respons 
 Ini pengukuran fungsional, bukan uji beban. Sebelum produksi: uji beban (mis. k6, 500 pengguna konkuren) terhadap salinan
 data berukuran produksi.
 
-### 11.5 Catatan produksi & batasan yang diketahui
+### 11.5 Aplikasi Android (dokter & perawat)
+`apps/mobile`: Capacitor 7 + React, APK bertanda tangan (`id.palmora.health.clinic`). Layar: antrian, registrasi dengan
+pindai QR kamera, triase, pemeriksaan (SOAP, diagnosis ICD-10, resep, surat sakit, tanda tangan), riwayat pasien.
+Memanggil API yang sama dengan bearer token; server mengizinkan origin WebView `https://localhost` (CORS, termasuk
+PATCH/DELETE). Keluhan saat registrasi kini disimpan di tiket antrian (migrasi 0020) dan terbawa ke triase/pemeriksaan.
+Aplikasi Mac dapat membuka akses untuk HP di Wi-Fi yang sama (menu Opsi). Detail build: `apps/mobile/README.md`.
+
+### 11.6 Catatan produksi & batasan yang diketahui
 - **Rahasia:** ganti semua kredensial demo; `JWT_SECRET` ≥ 32 karakter acak dan `FIELD_ENCRYPTION_KEY` 32 byte wajib (API menolak start di production tanpa keduanya). Simpan kunci di secret manager; rotasi kunci enkripsi memerlukan re-enkripsi kolom.
 - **NIK** belum dienkripsi tingkat kolom (dilindungi RLS dan selalu disamarkan di lookup/portal). Enkripsi + hash pencarian adalah langkah berikutnya.
 - **Lampiran** disimpan di direktori lokal (`STORAGE_DIR`); untuk lebih dari satu instance API gunakan volume bersama atau ganti ke object storage (S3/MinIO) — antarmuka penyimpanan ada di `platform.ts`.

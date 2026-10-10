@@ -33,6 +33,8 @@ test('end-to-end visit: registration → triage → doctor → sign → pharmacy
   patientId = reg.body.patientId;
   const ticket = reg.body.ticketId;
   assert.match(reg.body.queueCode, /^A-\d{3}$/);
+  const board = await nurse.get('/queue/board', { clinicId: clinic01 });
+  assert.equal(board.body.tickets.find((t: any) => t.id === ticket)?.chief_complaint, 'demam dan batuk 2 hari', 'the registration complaint is kept on the ticket');
   const dup = await nurse.post('/queue/register', { clinicId: clinic01, patientId });
   assert.equal(dup.status, 400, 'the same patient cannot be queued twice');
 

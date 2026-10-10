@@ -25,6 +25,12 @@ The first start takes about 3–5 minutes (install, database, demo data). A term
 If nothing appears, open a terminal (Ctrl+`) and run `bash .devcontainer/start.sh`.
 Log in as `kas.superadmin` / `Demo@12345`. Stop the codespace when you're done (free accounts include monthly hours).
 
+## Android app (doctors & nurses)
+
+`apps/mobile` is an Android app (Capacitor + React) for clinic staff: queue, registration with QR card scanning,
+triage, examination (SOAP, ICD-10 diagnosis, prescriptions, sick-leave letters, signing) and patient history.
+It talks to the same server and is governed by the same permissions. Build and server notes: [`apps/mobile/README.md`](apps/mobile/README.md).
+
 ## Quick start
 
 Requirements: PostgreSQL 16 (with contrib extensions — included in Homebrew `postgresql@16`, Postgres.app and the official packages) and Node.js ≥ 20.
@@ -40,7 +46,7 @@ cp apps/api/.env.example    apps/api/.env        # DATABASE_URL / DATABASE_OWNER
 #   JWT_SECRET=$(openssl rand -base64 48)
 #   FIELD_ENCRYPTION_KEY=$(openssl rand -base64 32)   ← set before seeding
 
-npm run db:reset      # create roles + database, run 19 migrations, load demo data (~25 s)
+npm run db:reset      # create roles + database, run 20 migrations, load demo data (~25 s)
 npm run build         # build the web app into apps/web/dist
 npm start             # API + web on http://localhost:8080
 ```
@@ -78,9 +84,10 @@ Tenant isolation is still tested against a second Group that the test runner cre
 
 ```
 docs/ARCHITECTURE.md   blueprint, decisions, test evidence, production notes (Bahasa Indonesia)
-packages/db/           schema, RLS policies, roles, migrations 0001–0019, seed, DB tests
+packages/db/           schema, RLS policies, roles, migrations 0001–0020, seed, DB tests
 apps/api/              Fastify API (src/core, src/modules, src/jobs) + API tests
 apps/web/              React SPA (src/lib, src/components, src/pages)
+apps/mobile/           Android app for doctors & nurses (Capacitor; android/ project)
 ```
 
 ## Before production

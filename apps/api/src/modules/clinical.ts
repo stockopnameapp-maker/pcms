@@ -46,7 +46,7 @@ export default async function clinicalRoutes(app: FastifyInstance) {
       const tickets = await tx.q(`
         SELECT q.id, q.queue_code, q.queue_no, q.priority, q.triage_level, q.status, q.source, q.registered_at, q.triage_at, q.consult_start_at, q.consult_end_at,
                q.pharmacy_at, q.completed_at, q.patient_id, p.full_name AS patient_name, p.mrn, p.gender, date_part('year', age(p.birth_date))::int AS age,
-               p.patient_type, s.full_name AS doctor_name, e.id AS encounter_id, e.status AS encounter_status, e.chief_complaint,
+               p.patient_type, s.full_name AS doctor_name, e.id AS encounter_id, e.status AS encounter_status, coalesce(e.chief_complaint, q.complaint) AS chief_complaint,
                (SELECT rx.id FROM prescription rx WHERE rx.encounter_id = e.id ORDER BY rx.prescribed_at DESC LIMIT 1) AS prescription_id,
                (SELECT count(*) FROM patient_allergy a WHERE a.patient_id = p.id AND a.status = 'ACTIVE' AND a.deleted_at IS NULL) AS allergies,
                round(extract(epoch FROM (coalesce(q.consult_start_at, CASE WHEN q.status IN ('COMPLETED','CANCELLED') THEN q.completed_at END, now()) - q.registered_at)) / 60) AS wait_min
@@ -83,11 +83,10 @@ export default async function clinicalRoutes(app: FastifyInstance) {
       const next = await tx.one(`SELECT coalesce(max(queue_no), 0) + 1 AS no,
                                         count(*) FILTER (WHERE priority = $3) + 1 AS pno FROM queue_ticket WHERE clinic_id = $1 AND visit_date = $2`, [b.clinicId, date, b.priority]);
       const code = `${PREFIX[b.priority]}-${String(next.pno).padStart(3, '0')}`;
-      const t = await tx.one(`INSERT INTO queue_ticket (clinic_id, patient_id, appointment_id, visit_date, queue_no, queue_code, source, priority, triage_level)
-                              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id, queue_code`,
-        [b.clinicId, patientId, b.appointmentId ?? null, date, next.no, code, b.source, b.priority, b.priority === 'EMERGENCY' ? 'RED' : null]);
+      const t = await tx.one(`INSERT INTO queue_ticket (clinic_id, patient_id, appointment_id, visit_date, queue_no, queue_code, source, priority, triage_level, complaint)
+                              VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id, queue_code`,
+        [b.clinicId, patientId, b.appointmentId ?? null, date, next.no, code, b.source, b.priority, b.priority === 'EMERGENCY' ? 'RED' : null, b.complaint?.trim() || null]);
       if (b.appointmentId) await tx.q(`UPDATE appointment SET status = 'CHECKED_IN' WHERE id = $1 AND status IN ('BOOKED','CONFIRMED')`, [b.appointmentId]);
-      if (b.complaint) await tx.q(`SELECT set_config('app.pending_complaint', $1, true)`, [b.complaint]);
       return { ticketId: t!.id, queueCode: t!.queue_code, patientId };
     });
   });
@@ -111,9 +110,9 @@ export default async function clinicalRoutes(app: FastifyInstance) {
         params.push(staff.id); sets.push(`assigned_staff_id = $${params.length}`);
         encounterId = await tx.val('SELECT id FROM encounter WHERE queue_ticket_id = $1', [t.id]);
         if (!encounterId) {
-          encounterId = await tx.val(`INSERT INTO encounter (encounter_no, clinic_id, patient_id, queue_ticket_id, doctor_id, encounter_type, started_at)
-                                      VALUES (app.next_document_no('ENC', $1, 'YYYYMM'), $2, $3, $4, $5, $6, now()) RETURNING id`,
-            [await clinicCode(tx, t.clinic_id), t.clinic_id, t.patient_id, t.id, staff.id, t.priority === 'EMERGENCY' ? 'EMERGENCY' : t.source === 'FOLLOW_UP' ? 'FOLLOW_UP' : 'OUTPATIENT']);
+          encounterId = await tx.val(`INSERT INTO encounter (encounter_no, clinic_id, patient_id, queue_ticket_id, doctor_id, encounter_type, started_at, chief_complaint)
+                                      VALUES (app.next_document_no('ENC', $1, 'YYYYMM'), $2, $3, $4, $5, $6, now(), $7) RETURNING id`,
+            [await clinicCode(tx, t.clinic_id), t.clinic_id, t.patient_id, t.id, staff.id, t.priority === 'EMERGENCY' ? 'EMERGENCY' : t.source === 'FOLLOW_UP' ? 'FOLLOW_UP' : 'OUTPATIENT', t.complaint ?? null]);
         } else {
           await tx.q('UPDATE encounter SET doctor_id = coalesce(doctor_id, $2) WHERE id = $1', [encounterId, staff.id]);
         }

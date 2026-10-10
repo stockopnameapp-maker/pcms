@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Palmora Health</string>
+    <string name="title_activity_main">Palmora Health</string>
+    <string name="package_name">id.palmora.health.clinic</string>
+    <string name="custom_url_scheme">id.palmora.health.clinic</string>
+</resources>

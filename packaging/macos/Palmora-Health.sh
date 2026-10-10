@@ -203,11 +203,18 @@ Ganti data demo sekarang? Semua data di Palmora Health pada Mac ini akan dihapus
   if [ "$ans" = "Ganti data demo" ]; then seed_db; else echo "$DEMOVER" > "$SUP/.demo-version"; fi
 }
 
+# Android app access: off by default (server only on this Mac). When switched on in "Opsi…", the server also
+# listens on the Mac's Wi-Fi address so phones on the same office network can connect.
+api_host() { [ -f "$SUP/.lan" ] && echo 0.0.0.0 || echo 127.0.0.1; }
+lan_url() {
+  local ip; ip=$(/usr/sbin/ipconfig getifaddr en0 2>/dev/null || /usr/sbin/ipconfig getifaddr en1 2>/dev/null)
+  [ -n "$ip" ] && echo "http://$ip:$WEBPORT"
+}
 start_api() {
   api_up && return 0
   (
     cd "$APPDIR"
-    NODE_ENV=production PORT=$WEBPORT HOST=127.0.0.1 STORAGE_DIR="$SUP/storage" WEB_DIST="$APPDIR/web" \
+    NODE_ENV=production PORT=$WEBPORT HOST=$(api_host) STORAGE_DIR="$SUP/storage" WEB_DIST="$APPDIR/web" \
     CORS_ORIGINS="$URL" JOBS_ENABLED=true \
       exec "$NODE" "$APPDIR/api/server.mjs"
   ) >>"$LOGDIR/server.log" 2>&1 &
@@ -266,9 +273,13 @@ open "$URL"
 
 # ---------------------------------------------------------------- control dialog
 while true; do
+  LANINFO=""
+  if [ -f "$SUP/.lan" ]; then LANINFO="
+Aplikasi Android (Wi-Fi yang sama): $(lan_url || echo 'Mac belum terhubung ke Wi-Fi')
+"; fi
   choice=$(dialog "Palmora Health sedang berjalan di:
 $URL
-
+$LANINFO
 Login demo: kas.superadmin  ·  password Demo@12345
 (akun demo lain ada di file \"Baca Dulu\")
 
@@ -278,10 +289,20 @@ Biarkan jendela ini terbuka selama memakai Palmora Health. Pilih \"Hentikan\" un
     "Buka Palmora Health") open "$URL" ;;
     "Hentikan Palmora Health") stop_all; exit 0 ;;
     "Opsi…")
-      opt=$(/usr/bin/osascript -e 'choose from list {"Buka folder data", "Buka folder log", "Reset data demo (hapus semua data)"} with title "Palmora Health" with prompt "Pilih tindakan:"' 2>/dev/null)
+      if [ -f "$SUP/.lan" ]; then LANOPT="Matikan akses aplikasi Android"; else LANOPT="Aktifkan akses aplikasi Android (Wi-Fi kantor)"; fi
+      opt=$(/usr/bin/osascript -e "choose from list {\"Buka folder data\", \"Buka folder log\", \"$LANOPT\", \"Reset data demo (hapus semua data)\"} with title \"Palmora Health\" with prompt \"Pilih tindakan:\"" 2>/dev/null)
       case "$opt" in
         "Buka folder data") open "$SUP" ;;
         "Buka folder log") open "$LOGDIR" ;;
+        "Aktifkan akses aplikasi Android"*)
+          touch "$SUP/.lan"; stop_api; start_api
+          dialog "Akses aplikasi Android aktif.
+
+Di HP Android (terhubung ke Wi-Fi yang sama dengan Mac ini), buka aplikasi Palmora Health dan isi alamat server:
+$(lan_url || echo 'Mac belum terhubung ke Wi-Fi')
+
+Jika macOS menanyakan izin koneksi masuk untuk \"node\", pilih Izinkan (Allow)." '"OK"' "OK" >/dev/null ;;
+        "Matikan akses aplikasi Android") rm -f "$SUP/.lan"; stop_api; start_api ;;
         "Reset data demo"*)
           sure=$(dialog "Semua data di Palmora Health akan dihapus dan diganti dengan data demo baru. Lanjutkan?" '"Batal", "Hapus & reset"' "Batal")
           if [ "$sure" = "Hapus & reset" ]; then

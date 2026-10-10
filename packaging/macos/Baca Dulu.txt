@@ -37,6 +37,12 @@ AKUN DEMO (password semua: Demo@12345)
   Pola: kas.<peran>.<unit>, mis. kas.dr.bcpa-rf-kln = dokter Klinik Rayon F
   PT Borneo Citra Persada Abadi (bcpa).
 
+APLIKASI ANDROID (DOKTER & PERAWAT)
+- Di jendela Palmora Health pilih "Opsi…" → "Aktifkan akses aplikasi Android (Wi-Fi kantor)".
+- Jendela lalu menampilkan alamat seperti http://192.168.1.20:8765. Isi alamat itu di aplikasi
+  Palmora Health di HP Android yang terhubung ke Wi-Fi yang sama.
+- Bila macOS menanyakan izin koneksi masuk untuk "node", pilih Izinkan (Allow).
+
 DATA & LOG
 - Data (database, lampiran, kunci rahasia):
     ~/Library/Application Support/Palmora Health

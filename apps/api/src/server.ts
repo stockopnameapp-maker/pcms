@@ -31,7 +31,7 @@ export async function buildServer(opts: { logger?: boolean } = {}) {
       fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'], scriptSrc: ["'self'"], connectSrc: ["'self'"], frameAncestors: ["'none'"] } },
     crossOriginEmbedderPolicy: false,
   });
-  await app.register(cors, { origin: config.corsOrigins, credentials: false, exposedHeaders: ['Content-Disposition'] });
+  await app.register(cors, { origin: config.corsOrigins, credentials: false, methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE'], exposedHeaders: ['Content-Disposition'] });
   await app.register(rateLimit, { max: 600, timeWindow: '1 minute', keyGenerator: (req) => req.headers.authorization?.slice(-24) ?? req.ip });
   await app.register(multipart, { limits: { fileSize: config.maxUploadMb * 1024 * 1024, files: 1 } });
 

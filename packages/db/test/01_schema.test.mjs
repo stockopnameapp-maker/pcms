@@ -72,7 +72,7 @@ test('demo data volumes match the specification', async () => {
     (SELECT count(*) FROM medical_staff WHERE staff_type = 'DOCTOR')::int AS doctors,
     (SELECT count(*) FROM medical_staff WHERE staff_type = 'NURSE')::int AS nurses,
     (SELECT count(DISTINCT code) FROM medicine)::int AS medicines,
-    (SELECT count(*) FROM hospital)::int AS hospitals`);
+    (SELECT count(*) FROM hospital WHERE created_by IS NULL)::int AS hospitals`);
   assert.deepEqual(c, { groups: 1, pts: 2, estates: 12, divisions: 24, clinics: 14, employees: 1000, patients: 2000, doctors: 28, nurses: 56, medicines: 200, hospitals: 11 });
 });
 
